@@ -1,0 +1,66 @@
+name: Bug Report
+description: File a bug report
+title: "[Bug]: "
+labels: [bug, backend, auth]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This bug report for things repository auth and routing service
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Details
+      description: How can we get in touch with you if we need more info?
+      placeholder: ex. email@example.com
+    validations:
+      required: false
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Also tell us, what did you expect to happen?
+      placeholder: Tell us what you see!
+      value: "A bug happened!"
+    validations:
+      required: true
+  - type: textarea
+    id: version
+    attributes:
+      label: Application version
+      description: What version are you using?
+      placeholder: v1.0.0
+    validations:
+      required: true
+  - type: input
+    id: time
+    attributes:
+      label: Time of error
+      description: What time did it happen?
+  - type: dropdown
+    id: platform
+    attributes:
+      label: What tool are you seeing the problem on?
+      multiple: true
+      options:
+        - Android app
+        - IOS app
+        - Postman
+        - Swagger page
+        - Frontend
+    validations:
+      required: true
+  - type: textarea
+    id: response
+    attributes:
+      label: Response from service
+      description: Please copy and paste response from your request.
+      render: JSON
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Confirmation of bug
+      description: Are you sure that it is not duplicate issue?
+      options:
+        - label: I agree that I see other issues and it is not duplicate!
+          required: true

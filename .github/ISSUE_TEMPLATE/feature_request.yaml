@@ -1,0 +1,26 @@
+name: Feature Request
+description: File a feature request
+title: "[Feature]: "
+labels: [feature, backend, auth]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This feature request for things repository auth and routing service
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Details
+      description: How can we get in touch with you if we need more info?
+      placeholder: ex. email@example.com
+    validations:
+      required: false
+  - type: textarea
+    id: what-new
+    attributes:
+      label: What are you want to add?
+      description: Also tell us, what your idea?
+      placeholder: Tell us what you see!
+      value: "A feature idea..."
+    validations:
+      required: true
