@@ -1,12 +1,24 @@
-package rest_handler
+package handler
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/Thing-repository/backend-server/pkg/core"
+	"github.com/gin-gonic/gin"
+)
 
-type Handler struct {
+//go:generate mockgen -source=handler.go -destination=mocks/authMock.go
+type Auth interface {
+	SignIn(authData *core.UserSignInData) (*core.SignInResponse, error)
+	SignUp(authData *core.UserSignUpData) (*core.SignInResponse, error)
 }
 
-func NewHandler() *Handler {
-	return &Handler{}
+type Handler struct {
+	auth Auth
+}
+
+func NewHandler(auth Auth) *Handler {
+	return &Handler{
+		auth: auth,
+	}
 }
 
 func (H *Handler) InitRoutes() *gin.Engine {
