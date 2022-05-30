@@ -1,40 +1,45 @@
 package main
 
 import (
-	"github.com/Thing-repository/backend-auth-server/internal/transport/rest"
-	rest_handler "github.com/Thing-repository/backend-auth-server/internal/transport/rest/handler"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"os"
 )
 
+var serverPort string
+var tokenSecret string
+
 func main() {
-	logrus.SetLevel(logrus.DebugLevel)
-	logrus.SetFormatter(&logrus.TextFormatter{
-		TimestampFormat: "2006.01.02 15:04:05",
-		FullTimestamp:   true,
-		DisableSorting:  true,
-	})
 	logBase := logrus.Fields{
 		"module":   "main",
 		"file":     "main",
 		"function": "main",
 	}
 
+	setupLogs()
+
 	initEnv()
 	initConfig()
 
-	httpHandler := rest_handler.NewHandler()
+	//httpHandler := restHandler.NewHandler()
+	//httpServer := rest.NewHttpServer()
 
-	httpServer := rest.NewHttpServer()
-	err := httpServer.Run(os.Getenv("AUTH_SERVER_HTTP_PORT"), httpHandler.InitRoutes())
-	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"base":  logBase,
-			"error": "err",
-		}).Error("httpServer run error")
-	}
+	//if err := httpServer.Run(serverPort, httpHandler.InitRoutes()); err != nil {
+	//	logrus.WithFields(logrus.Fields{
+	//		"base":  logBase,
+	//		"error": "err",
+	//	}).Error("httpServer run error")
+	//}
+}
+
+func setupLogs() {
+	logrus.SetLevel(logrus.DebugLevel)
+	logrus.SetFormatter(&logrus.TextFormatter{
+		TimestampFormat: "2006.01.02 15:04:05",
+		FullTimestamp:   true,
+		DisableSorting:  true,
+	})
 }
 
 func initEnv() {
@@ -55,6 +60,16 @@ func initEnv() {
 				"error": err,
 			}).Fatal("error loading environment")
 		}
+	}
+
+	if tokenSecret == "" {
+		// for set tokenSecret in build add build parameter "-X main.tokenSecret=(token secret)"
+		tokenSecret = os.Getenv("THINGS_REPOSITORY_TOKEN_SECRET")
+	}
+
+	if serverPort == "" {
+		// for set serverPort in build add build parameter "-X main.serverPort=(token secret)"
+		serverPort = os.Getenv("SERVER_HTTP_PORT")
 	}
 }
 
