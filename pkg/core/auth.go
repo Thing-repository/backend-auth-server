@@ -1,8 +1,15 @@
 package core
 
-type UserAuthData struct {
+type UserSignInData struct {
 	UserMail     string `json:"user_mail"`
 	UserPassword string `json:"user_password"`
+}
+
+type UserSignUpData struct {
+	FirstName string `json:"first_name" binding:"required"`
+	LastName  string `json:"last_name" binding:"required"`
+	Email     string `json:"email" binding:"required"`
+	Password  string `json:"password" binding:"required"`
 }
 
 type Access struct {
@@ -15,4 +22,9 @@ type Access struct {
 type AuthValidationData struct {
 	UserId       int    `json:"user_id"`
 	UserAccesses Access `json:"user_accesses"`
+}
+
+type SignInResponse struct {
+	User
+	Token string `json:"token"`
 }
