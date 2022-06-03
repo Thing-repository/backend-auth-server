@@ -14,10 +14,13 @@ RUN go install github.com/swaggo/swag/cmd/swag@latest
 
 RUN swag init -g cmd/app/main.go
 
-RUN --mount=type=secret,id=SALT --mount=type=secret,id=TOKEN_SECRET  \
+RUN --mount=type=secret,id=SALT --mount=type=secret,id=TOKEN_SECRET cat /run/secrets/SALT && cat /run/secrets/TOKEN_SECRET && \
     export SALT=$(cat /run/secrets/SALT) && \
-    export TOKEN_SECRET=$(cat /run/secrets/TOKEN_SECRET) && \
-    go build -o thing-repository -ldflags "-X main.tokenSecret=$TOKEN_SECRET -X main.salt=$SALT" ./cmd/app/main.go
+    export TOKEN_SECRET=$(cat /run/secrets/TOKEN_SECRET)
+
+RUN echo $TOKEN_SECRET && echo $SALT
+
+RUN go build -o thing-repository -ldflags "-X main.tokenSecret=$TOKEN_SECRET -X main.salt=$SALT" ./cmd/app/main.go
 
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
