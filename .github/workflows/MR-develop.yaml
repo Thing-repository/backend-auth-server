@@ -1,4 +1,4 @@
-name: Staging
+name: MR-develop
 
 on:
   pull_request:
