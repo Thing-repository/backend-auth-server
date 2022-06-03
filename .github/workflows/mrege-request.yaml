@@ -35,7 +35,6 @@ jobs:
       - docs
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
         with:
@@ -55,4 +54,4 @@ jobs:
         run: go test -v -coverpkg=./... -coverprofile=coverage.out -covermode=atomic ./...
 
       - name: test build
-        run: go build
+        run: go build cmd/app/main.go
