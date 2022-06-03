@@ -25,6 +25,8 @@ func TestHandler_signIn(t *testing.T) {
 
 	invalidDataMassage := `{"message":"invalid username or password"}`
 
+	testImageUrl := "test_image"
+
 	testTable := []struct {
 		name                 string
 		inputBody            string
@@ -36,9 +38,9 @@ func TestHandler_signIn(t *testing.T) {
 	}{
 		{
 			name:      "Success",
-			inputBody: `{"user_mail":"Test","user_password":"TestTest"}`,
+			inputBody: `{"email":"test_email@foo.com","password":"TestTest"}`,
 			inputAuthData: core.UserSignInData{
-				UserMail:     "Test",
+				UserMail:     "test_email@foo.com",
 				UserPassword: "TestTest",
 			},
 			mockBehavior: func(s *mockhandler.MockAuth, user *core.UserSignInData, userData *core.SignInResponse) {
@@ -46,10 +48,10 @@ func TestHandler_signIn(t *testing.T) {
 			},
 			expectedStatusCode: http.StatusOK,
 			expectedResponseBody: `{` +
-				`"id":0,` +
 				`"first_name":"test_name",` +
 				`"last_name":"test_last_name",` +
-				`"email":"test_email",` +
+				`"email":"test_email@foo.com",` +
+				`"id":0,` +
 				`"image_url":"test_image",` +
 				`"company_id":1,` +
 				`"department_id":2,` +
@@ -61,11 +63,13 @@ func TestHandler_signIn(t *testing.T) {
 				`}`,
 			outputResponse: core.SignInResponse{
 				User: core.User{
+					UserBaseData: core.UserBaseData{
+						FirstName: "test_name",
+						LastName:  "test_last_name",
+						Email:     "test_email@foo.com",
+					},
 					Id:                0,
-					FirstName:         "test_name",
-					LastName:          "test_last_name",
-					Email:             "test_email",
-					ImageURL:          "test_image",
+					ImageURL:          &testImageUrl,
 					CompanyId:         pointy.Int(1),
 					DepartmentId:      pointy.Int(2),
 					IsCompanyAdmin:    pointy.Bool(true),
@@ -141,6 +145,8 @@ func TestHandler_signIn(t *testing.T) {
 func TestHandler_signUp(t *testing.T) {
 	type mockBehavior func(s *mockhandler.MockAuth, user *core.UserSignUpData, userData *core.SignInResponse)
 
+	testImageUrl := "test_image"
+
 	testTable := []struct {
 		name                 string
 		inputBody            string
@@ -154,30 +160,34 @@ func TestHandler_signUp(t *testing.T) {
 			name:      "OK",
 			inputBody: `{"first_name":"test_name","last_name":"test_last_name","email":"test@test.com","password":"TestTest24"}`,
 			inputAuthData: core.UserSignUpData{
-				FirstName: "test_name",
-				LastName:  "test_last_name",
-				Email:     "test@test.com",
-				Password:  "TestTest24",
+				UserBaseData: core.UserBaseData{
+					FirstName: "test_name",
+					LastName:  "test_last_name",
+					Email:     "test@test.com",
+				},
+				Password: "TestTest24",
 			},
 			mockBehavior: func(s *mockhandler.MockAuth, user *core.UserSignUpData, userData *core.SignInResponse) {
 				s.EXPECT().SignUp(user).Return(userData, nil)
 			},
 			expectedStatusCode: http.StatusOK,
 			expectedResponseBody: `{` +
-				`"id":0,` +
 				`"first_name":"test_name",` +
 				`"last_name":"test_last_name",` +
 				`"email":"test@test.com",` +
+				`"id":0,` +
 				`"image_url":"test_image",` +
 				`"token":"test_token"` +
 				`}`,
 			outputResponse: core.SignInResponse{
 				User: core.User{
+					UserBaseData: core.UserBaseData{
+						FirstName: "test_name",
+						LastName:  "test_last_name",
+						Email:     "test@test.com",
+					},
 					Id:                0,
-					FirstName:         "test_name",
-					LastName:          "test_last_name",
-					Email:             "test@test.com",
-					ImageURL:          "test_image",
+					ImageURL:          &testImageUrl,
 					CompanyId:         nil,
 					DepartmentId:      nil,
 					IsCompanyAdmin:    nil,
@@ -298,7 +308,7 @@ func TestHandler_signUp(t *testing.T) {
 			mockBehavior: func(s *mockhandler.MockAuth, user *core.UserSignUpData, userData *core.SignInResponse) {
 			},
 			expectedStatusCode:   http.StatusBadRequest,
-			expectedResponseBody: `{"message":"Key: 'UserSignUpData.FirstName' Error:Field validation for 'FirstName' failed on the 'required' tag"}`,
+			expectedResponseBody: `{"message":"Key: 'UserSignUpData.UserBaseData.FirstName' Error:Field validation for 'FirstName' failed on the 'required' tag"}`,
 		},
 		{
 			name:      "Hasn't first name",
@@ -306,7 +316,7 @@ func TestHandler_signUp(t *testing.T) {
 			mockBehavior: func(s *mockhandler.MockAuth, user *core.UserSignUpData, userData *core.SignInResponse) {
 			},
 			expectedStatusCode:   http.StatusBadRequest,
-			expectedResponseBody: `{"message":"Key: 'UserSignUpData.FirstName' Error:Field validation for 'FirstName' failed on the 'required' tag"}`,
+			expectedResponseBody: `{"message":"Key: 'UserSignUpData.UserBaseData.FirstName' Error:Field validation for 'FirstName' failed on the 'required' tag"}`,
 		},
 		{
 			name:      "Empty last name",
@@ -314,7 +324,7 @@ func TestHandler_signUp(t *testing.T) {
 			mockBehavior: func(s *mockhandler.MockAuth, user *core.UserSignUpData, userData *core.SignInResponse) {
 			},
 			expectedStatusCode:   http.StatusBadRequest,
-			expectedResponseBody: `{"message":"Key: 'UserSignUpData.LastName' Error:Field validation for 'LastName' failed on the 'required' tag"}`,
+			expectedResponseBody: `{"message":"Key: 'UserSignUpData.UserBaseData.LastName' Error:Field validation for 'LastName' failed on the 'required' tag"}`,
 		},
 		{
 			name:      "No last name",
@@ -322,7 +332,7 @@ func TestHandler_signUp(t *testing.T) {
 			mockBehavior: func(s *mockhandler.MockAuth, user *core.UserSignUpData, userData *core.SignInResponse) {
 			},
 			expectedStatusCode:   http.StatusBadRequest,
-			expectedResponseBody: `{"message":"Key: 'UserSignUpData.LastName' Error:Field validation for 'LastName' failed on the 'required' tag"}`,
+			expectedResponseBody: `{"message":"Key: 'UserSignUpData.UserBaseData.LastName' Error:Field validation for 'LastName' failed on the 'required' tag"}`,
 		},
 		{
 			name:      "Empty password",
@@ -346,7 +356,7 @@ func TestHandler_signUp(t *testing.T) {
 			mockBehavior: func(s *mockhandler.MockAuth, user *core.UserSignUpData, userData *core.SignInResponse) {
 			},
 			expectedStatusCode:   http.StatusBadRequest,
-			expectedResponseBody: `{"message":"Key: 'UserSignUpData.Email' Error:Field validation for 'Email' failed on the 'required' tag"}`,
+			expectedResponseBody: `{"message":"Key: 'UserSignUpData.UserBaseData.Email' Error:Field validation for 'Email' failed on the 'required' tag"}`,
 		},
 		{
 			name:      "Empty email",
@@ -354,7 +364,7 @@ func TestHandler_signUp(t *testing.T) {
 			mockBehavior: func(s *mockhandler.MockAuth, user *core.UserSignUpData, userData *core.SignInResponse) {
 			},
 			expectedStatusCode:   http.StatusBadRequest,
-			expectedResponseBody: `{"message":"Key: 'UserSignUpData.Email' Error:Field validation for 'Email' failed on the 'required' tag"}`,
+			expectedResponseBody: `{"message":"Key: 'UserSignUpData.UserBaseData.Email' Error:Field validation for 'Email' failed on the 'required' tag"}`,
 		},
 	}
 

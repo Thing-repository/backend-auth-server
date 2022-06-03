@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"github.com/Thing-repository/backend-server/pkg/core"
+	"github.com/Thing-repository/backend-server/pkg/core/moduleErrors"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"
@@ -80,7 +81,15 @@ func (H *Handler) signUp(c *gin.Context) {
 			"base":  logBase,
 			"error": err.Error(),
 		}).Error("sgn-up error")
-		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		switch err {
+		case moduleErrors.ErrorServiceUserAlreadyHas:
+			newErrorResponse(c, http.StatusBadRequest, err.Error())
+			break
+		default:
+			newErrorResponse(c, http.StatusInternalServerError, err.Error())
+			break
+		}
+
 		return
 	}
 
@@ -88,6 +97,17 @@ func (H *Handler) signUp(c *gin.Context) {
 
 }
 
+// @Summary SignIn
+// @Tags auth
+// @Description This request for sign in user by owt account
+// @ID login
+// @Accept json
+// @Produces json
+// @Param input body core.UserSignInData true "credentials"
+// @Success 200 {object} core.SignInResponse
+// @Failure 400 {ob
+// @Failure default {object} errorResponse
+// @Router /auth [post]
 func (H *Handler) signIn(c *gin.Context) {
 	logBase := logrus.Fields{
 		"module":   "handler",
@@ -109,7 +129,7 @@ func (H *Handler) signIn(c *gin.Context) {
 		logrus.WithFields(logrus.Fields{
 			"base": logBase,
 		}).Error("Bad username or password")
-		newErrorResponse(c, http.StatusBadRequest, "Invalid username or password")
+		newErrorResponse(c, http.StatusBadRequest, moduleErrors.ErrorHandlerInvalidUsernameOrPassword.Error())
 		return
 	}
 
@@ -120,8 +140,14 @@ func (H *Handler) signIn(c *gin.Context) {
 			"base":  logBase,
 			"error": err,
 		}).Error("authorization error")
-		newErrorResponse(c, http.StatusInternalServerError, err.Error())
-		return
+		switch err {
+		case moduleErrors.ErrorServiceUserNotFound:
+			newErrorResponse(c, http.StatusBadRequest, moduleErrors.ErrorHandlerInvalidUsernameOrPassword.Error())
+			return
+		default:
+			newErrorResponse(c, http.StatusInternalServerError, err.Error())
+			return
+		}
 	}
 	c.JSON(http.StatusOK, userData)
 }
