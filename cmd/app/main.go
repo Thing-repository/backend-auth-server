@@ -14,6 +14,20 @@ import (
 	"os"
 )
 
+// @title Thing Repository API
+// @version 0.0.1
+// @description API server for thing repository service
+
+// @contact.name Emil Islamov
+// @contact.email emil.islamov110778@gmail.com
+
+// @host localhost:8001
+// @BasePath /api/v1
+
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
+
 // base data
 var httpPort string
 
@@ -25,6 +39,7 @@ var salt string
 
 //db data
 var postgresCfg postgres.Config
+var postgresPassword string
 
 func main() {
 	logBase := logrus.Fields{
@@ -111,6 +126,8 @@ func initEnv() {
 		}
 	}
 
+	postgresCfg.Password = postgresPassword
+
 	if postgresCfg.Password == "" {
 		// for set tokenSecret in build add build parameter "-X main.postgresPassword=(postgres password)"
 		logrus.WithFields(logrus.Fields{
@@ -128,7 +145,7 @@ func initEnv() {
 	}
 
 	if salt == "" {
-		// for set tokenSecret in build add build parameter "-X main.postgresPassword=(postgres password)"
+		// for set tokenSecret in build add build parameter "-X main.salt=(salt)"
 		logrus.WithFields(logrus.Fields{
 			"base":      logBase,
 			"build_cmd": "-X main.salt=(salt)",

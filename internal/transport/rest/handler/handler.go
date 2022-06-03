@@ -1,8 +1,11 @@
 package handler
 
 import (
+	_ "github.com/Thing-repository/backend-server/docs"
 	"github.com/Thing-repository/backend-server/pkg/core"
 	"github.com/gin-gonic/gin"
+	"github.com/swaggo/gin-swagger"
+	"github.com/swaggo/gin-swagger/swaggerFiles"
 )
 
 //go:generate mockgen -source=handler.go -destination=mocks/authMock.go
@@ -26,6 +29,7 @@ func (H *Handler) InitRoutes() *gin.Engine {
 
 	api := router.Group("/api/v1")
 	{
+		api.GET("/open_api/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 		auth := api.Group("/auth")
 		{
 			auth.POST("/sign-up", H.signUp)

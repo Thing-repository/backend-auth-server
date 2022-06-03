@@ -39,6 +39,18 @@ func validatePassword(password string) error {
 	return nil
 }
 
+// @Summary SignUp
+// @Tags auth
+// @Description This request for sign up user
+// @ID register
+// @Accept json
+// @Produces json
+// @Param input body core.UserSignUpData true "user register info"
+// @Success 200 {object} core.SignInResponse
+// @Failure 400 {object} errorResponse
+// @Failure 500 {object} errorResponse
+// @Failure default {object} errorResponse
+// @Router /auth/sign-up [post]
 func (H *Handler) signUp(c *gin.Context) {
 	logBase := logrus.Fields{
 		"module":   "handler",
@@ -99,15 +111,16 @@ func (H *Handler) signUp(c *gin.Context) {
 
 // @Summary SignIn
 // @Tags auth
-// @Description This request for sign in user by owt account
+// @Description This request for sign in user
 // @ID login
 // @Accept json
 // @Produces json
 // @Param input body core.UserSignInData true "credentials"
 // @Success 200 {object} core.SignInResponse
-// @Failure 400 {ob
+// @Failure 400 {object} errorResponse
+// @Failure 500 {object} errorResponse
 // @Failure default {object} errorResponse
-// @Router /auth [post]
+// @Router /auth/sign-in [post]
 func (H *Handler) signIn(c *gin.Context) {
 	logBase := logrus.Fields{
 		"module":   "handler",
