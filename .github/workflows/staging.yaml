@@ -66,17 +66,13 @@ jobs:
 
       - uses: actions/checkout@v3
 
-      - name: fetch numary control
-        uses: actions/download-artifact@v3
-        with:
-          name: docs-dist
-          path: docs/
-
       - name: Build and push
         uses: docker/build-push-action@v3
         with:
           push: true
           tags: emil11078/thing-repository:latest
+          platform:
+            linux/arm/v7
           secrets: |
             SALT=${{ secrets.SALT }}
             TOKEN_SECRET=${{ secrets.TOKEN_SECRET }}
