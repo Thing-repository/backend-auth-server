@@ -1,14 +1,8 @@
 package core
 
 type UserSignInData struct {
-	UserMail     string `json:"user_mail"`
-	UserPassword string `json:"user_password"`
-}
-
-type UserBaseData struct {
-	FirstName string `json:"first_name" binding:"required"`
-	LastName  string `json:"last_name" binding:"required"`
-	Email     string `json:"email" binding:"required"`
+	UserMail     string `json:"email"`
+	UserPassword string `json:"password"`
 }
 
 type UserSignUpData struct {
