@@ -90,10 +90,10 @@ jobs:
       - name: deploy to raspberry
         uses: appleboy/ssh-action@master
         with:
-          host: "92.255.206.17"
+          host: ${{ secrets.RASPBERRY_PI_SSH_HOST }}
           username: ${{ secrets.RASPBERRY_PI_USERNAME }}
           password: ${{ secrets.RASPBERRY_PI_PASSWORD }}
-          script:
+          script: |
             cd thing-repository
             sudo docker pull emil11078/thing-repository:latest
             sudo docker-compose restart
