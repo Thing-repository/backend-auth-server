@@ -71,7 +71,7 @@ jobs:
         with:
           push: true
           tags: emil11078/thing-repository:latest
-          platform:
+          platforms:
             linux/arm/v7
           secrets: |
             SALT=${{ secrets.SALT }}
