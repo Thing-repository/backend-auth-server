@@ -63,15 +63,23 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          secrets: |
-            SALT=${{ secrets.SALT }}
-            TOKEN_SECRET=${{ secrets.TOKEN_SECRET }}
+
+      - uses: actions/checkout@v3
+
+      - name: fetch numary control
+        uses: actions/download-artifact@v3
+        with:
+          name: docs-dist
+          path: docs/
 
       - name: Build and push
         uses: docker/build-push-action@v3
         with:
           push: true
           tags: emil11078/thing-repository:latest
+          secrets: |
+            SALT=${{ secrets.SALT }}
+            TOKEN_SECRET=${{ secrets.TOKEN_SECRET }}
 
   deploy:
     name: 'Run test build app'
@@ -82,7 +90,7 @@ jobs:
       - name: deploy to raspberry
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.RASPBERRY_PI_HOST }}
+          host: ${{ secrets.RASPBERRY_PI_SSH_HOST }}
           username: ${{ secrets.RASPBERRY_PI_USERNAME }}
           key: ${{ secrets.RASPBERRY_PI_PRIVATE_KEY }}
           port: ${{ secrets.RASPBERRY_PI_SSH_PORT }}
