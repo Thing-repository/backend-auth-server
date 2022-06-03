@@ -18,13 +18,13 @@ CREATE TABLE users
     id                  serial primary key,
     first_name          varchar(255)                                      not null,
     last_name           varchar(255)                                      not null,
-    email               varchar(255)                                      not null,
+    email               varchar(255)                                      not null unique,
     image_url           varchar(255),
     password_hash       varchar(255)                                      not null,
-    company_id          int references companies (id) on delete cascade   not null,
-    department_id       int references departments (id) on delete cascade not null,
-    is_company_admin    boolean                                           not null,
-    is_department_admin boolean                                           not null,
+    company_id          int references companies (id) on delete cascade,
+    department_id       int references departments (id) on delete cascade,
+    is_company_admin    boolean,
+    is_department_admin boolean,
     vacation_time_start timestamp,
     vacation_time_end   timestamp
 );
@@ -50,6 +50,8 @@ CREATE TABLE things
 (
     id                  serial primary key,
     thing_name          varchar(255) not null,
+    company_id int references companies (id) on delete cascade not null,
+    department_id int references departments (id) on delete cascade not null,
     image_url           varchar(255),
     thing_type          thing_types  not null,
     thing_remainder     real,
