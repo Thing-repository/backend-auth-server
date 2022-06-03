@@ -48,8 +48,8 @@ jobs:
       - name: fetch numary control
         uses: actions/download-artifact@v3
         with:
-          name: control-dist
-          path: cmd/control/
+          name: docs-dist
+          path: docs/
 
       - name: Run test
         run: go test -v -coverpkg=./... -coverprofile=coverage.out -covermode=atomic ./...
