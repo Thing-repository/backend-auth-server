@@ -9,13 +9,13 @@ import (
 //go:generate mockgen -source=auth.go -destination=mock/authMock.go
 type token interface {
 	GenerateToken(userId int) (string, error)
-	ValidateToken(userId int) error
+	ValidateToken(token string) (int, error)
 }
 
 //go:generate mockgen -source=auth.go -destination=mock/authMock.go
 type hash interface {
 	GenerateHash(password string) (string, error)
-	ValidateHash(password string, hash string) error
+	ValidateHash(hash string, password string) error
 }
 
 //go:generate mockgen -source=auth.go -destination=mock/authMock.go
@@ -63,7 +63,7 @@ func (a *Auth) SignIn(authData *core.UserSignInData) (*core.SignInResponse, erro
 	}
 
 	// validation password
-	err = a.hash.ValidateHash(authData.UserPassword, userData.PasswordHash)
+	err = a.hash.ValidateHash(userData.PasswordHash, authData.UserPassword)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":  logBase,
@@ -129,7 +129,7 @@ func (a *Auth) SignUp(authData *core.UserSignUpData) (*core.SignInResponse, erro
 		logrus.WithFields(logrus.Fields{
 			"base":  logBase,
 			"error": err,
-		}).Error("error generate password hash")
+		}).Error("error add user to database")
 		switch err {
 		case moduleErrors.ErrorDataBaseUserAlreadyHas:
 			return nil, moduleErrors.ErrorServiceUserAlreadyHas

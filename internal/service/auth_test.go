@@ -20,6 +20,8 @@ func TestSignIn(t *testing.T) {
 	type getUserByEmailMockBehavior func(s *mockService.Mockdb, email string, userDB *core.UserDB)
 	type validateHashMockBehavior func(s *mockService.Mockhash, hash string, password string)
 
+	testImageUrl := "test_image"
+
 	testTable := []struct {
 		name                       string
 		inputAuthData              core.UserSignInData
@@ -41,11 +43,13 @@ func TestSignIn(t *testing.T) {
 			token:          "bar",
 			userDb: core.UserDB{
 				User: core.User{
+					UserBaseData: core.UserBaseData{
+						FirstName: "test_name",
+						LastName:  "test_last_name",
+						Email:     "foo@example.com",
+					},
 					Id:                1,
-					FirstName:         "test_name",
-					LastName:          "test_last_name",
-					Email:             "foo@example.com",
-					ImageURL:          "test_image",
+					ImageURL:          &testImageUrl,
 					CompanyId:         nil,
 					DepartmentId:      nil,
 					IsCompanyAdmin:    nil,
@@ -62,7 +66,7 @@ func TestSignIn(t *testing.T) {
 				s.EXPECT().GetUserByEmail(email).Return(userDb, nil)
 			},
 			validateHashMockBehavior: func(s *mockService.Mockhash, hash string, password string) {
-				s.EXPECT().ValidateHash(password, hash).Return(nil)
+				s.EXPECT().ValidateHash(hash, password).Return(nil)
 			},
 		},
 		{
@@ -84,11 +88,13 @@ func TestSignIn(t *testing.T) {
 			outputError: moduleErrors.ErrorServiceInvalidPassword,
 			userDb: core.UserDB{
 				User: core.User{
+					UserBaseData: core.UserBaseData{
+						FirstName: "test_name",
+						LastName:  "test_last_name",
+						Email:     "foo@example.com",
+					},
 					Id:                1,
-					FirstName:         "test_name",
-					LastName:          "test_last_name",
-					Email:             "foo@example.com",
-					ImageURL:          "test_image",
+					ImageURL:          &testImageUrl,
 					CompanyId:         nil,
 					DepartmentId:      nil,
 					IsCompanyAdmin:    nil,
@@ -102,7 +108,7 @@ func TestSignIn(t *testing.T) {
 				s.EXPECT().GetUserByEmail(email).Return(userDb, nil)
 			},
 			validateHashMockBehavior: func(s *mockService.Mockhash, hash string, password string) {
-				s.EXPECT().ValidateHash(password, hash).Return(moduleErrors.ErrorHashValidationPassword)
+				s.EXPECT().ValidateHash(hash, password).Return(moduleErrors.ErrorHashValidationPassword)
 			},
 		},
 		{

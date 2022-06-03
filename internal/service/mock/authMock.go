@@ -50,17 +50,18 @@ func (mr *MocktokenMockRecorder) GenerateToken(userId interface{}) *gomock.Call 
 }
 
 // ValidateToken mocks base method.
-func (m *Mocktoken) ValidateToken(userId int) error {
+func (m *Mocktoken) ValidateToken(token string) (int, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateToken", userId)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "ValidateToken", token)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // ValidateToken indicates an expected call of ValidateToken.
-func (mr *MocktokenMockRecorder) ValidateToken(userId interface{}) *gomock.Call {
+func (mr *MocktokenMockRecorder) ValidateToken(token interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateToken", reflect.TypeOf((*Mocktoken)(nil).ValidateToken), userId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateToken", reflect.TypeOf((*Mocktoken)(nil).ValidateToken), token)
 }
 
 // Mockhash is a mock of hash interface.
@@ -102,17 +103,17 @@ func (mr *MockhashMockRecorder) GenerateHash(password interface{}) *gomock.Call 
 }
 
 // ValidateHash mocks base method.
-func (m *Mockhash) ValidateHash(password, hash string) error {
+func (m *Mockhash) ValidateHash(hash, password string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateHash", password, hash)
+	ret := m.ctrl.Call(m, "ValidateHash", hash, password)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ValidateHash indicates an expected call of ValidateHash.
-func (mr *MockhashMockRecorder) ValidateHash(password, hash interface{}) *gomock.Call {
+func (mr *MockhashMockRecorder) ValidateHash(hash, password interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateHash", reflect.TypeOf((*Mockhash)(nil).ValidateHash), password, hash)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateHash", reflect.TypeOf((*Mockhash)(nil).ValidateHash), hash, password)
 }
 
 // Mockdb is a mock of db interface.
