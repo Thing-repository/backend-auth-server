@@ -1,4 +1,4 @@
-FROM golang:1.18
+FROM golang:1.18-alpine
 
 RUN go version
 ENV GOPATH=/
@@ -19,9 +19,11 @@ RUN go build -o thing-repository -ldflags "-X main.tokenSecret=kjfdsfl;dfna,.hfl
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 
+ENV AUTH_SERVER_ENV=OK
+
 WORKDIR /root/
 
 COPY --from=0 /thing-repository/thing-repository .
-COPY --from=0 /thing-repository/configs ./
+COPY --from=0 /thing-repository/configs/ ./configs/
 
 CMD ["./thing-repository"]
