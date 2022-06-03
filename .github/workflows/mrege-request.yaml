@@ -30,6 +30,9 @@ jobs:
       - name: get deps
         run: go mod download
 
+      - name: generate docs
+        run: swag init -g cmd/app/main.go
+
       - name: Run test
         run: go test -v -coverpkg=./... -coverprofile=coverage.out -covermode=atomic ./...
 
