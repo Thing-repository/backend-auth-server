@@ -74,8 +74,8 @@ jobs:
           platforms:
             linux/arm/v7
           secrets: |
-            SALT=${{ secrets.SALT }}
-            TOKEN_SECRET=${{ secrets.TOKEN_SECRET }}
+            "SALT=${{ secrets.SALT }}"
+            "TOKEN_SECRET=${{ secrets.TOKEN_SECRET }}"
 
   deploy:
     name: 'Deploy to server'
