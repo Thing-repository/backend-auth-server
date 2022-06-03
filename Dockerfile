@@ -7,6 +7,9 @@ COPY ./ /thing-repository
 
 WORKDIR /thing-repository
 
+ARG TOKEN_SECRET
+ARG SALT
+
 # build go app
 RUN go mod download
 

@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  thing-repository-app:
+    restart: always
+    image: emil11078/thing-repository:latest
+    ports:
+      - 8001:8000
+    depends_on:
+      - db
+    environment:
+      - AUTH_SERVER_ENV=OK
+      - THINGS_REPOSITORY_HTTP_PORT=8000
+      - THINGS_REPOSITORY_POSTGRES_HOST=db
+      - THINGS_REPOSITORY_POSTGRES_PORT=5432
+      - THINGS_REPOSITORY_POSTGRES_DB_NAME=postgres
+      - THINGS_REPOSITORY_POSTGRES_USER=postgres
+      - THINGS_REPOSITORY_SQL_DP_PASSWORD=110778
+
+  db:
+    restart: always
+    image: postgres:latest
+    volumes:
+      - ./.database/postgres/data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=110778
+    ports:
+      - 5431:5432
