@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1.2
+
 FROM golang:1.18-alpine
 
 RUN go version
