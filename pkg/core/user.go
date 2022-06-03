@@ -1,11 +1,15 @@
 package core
 
+type UserBaseData struct {
+	FirstName string `json:"first_name" binding:"required"`
+	LastName  string `json:"last_name" binding:"required"`
+	Email     string `json:"email" binding:"required"`
+}
+
 type User struct {
+	UserBaseData
 	Id                int     `json:"id" binding:"required"`
-	FirstName         string  `json:"first_name" binding:"required"`
-	LastName          string  `json:"last_name" binding:"required"`
-	Email             string  `json:"email" binding:"required"`
-	ImageURL          string  `json:"image_url" binding:"required"`
+	ImageURL          *string `json:"image_url,omitempty"`
 	CompanyId         *int    `json:"company_id,omitempty"`
 	DepartmentId      *int    `json:"department_id,omitempty"`
 	IsCompanyAdmin    *bool   `json:"is_company_admin,omitempty"`
