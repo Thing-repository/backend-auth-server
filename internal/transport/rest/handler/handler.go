@@ -24,9 +24,9 @@ func NewHandler(auth Auth) *Handler {
 func (H *Handler) InitRoutes() *gin.Engine {
 	router := gin.New()
 
-	router.Group("/api/v1")
+	api := router.Group("/api/v1")
 	{
-		auth := router.Group("/auth")
+		auth := api.Group("/auth")
 		{
 			auth.POST("/sign-up", H.signUp)
 			auth.POST("/sign-in", H.signIn)
