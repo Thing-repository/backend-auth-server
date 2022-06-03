@@ -16,7 +16,7 @@ RUN swag init -g cmd/app/main.go
 
 RUN --mount=type=secret,id=SALT --mount=type=secret,id=TOKEN_SECRET cat /run/secrets/SALT && cat /run/secrets/TOKEN_SECRET && \
     export SALT=$(cat /run/secrets/SALT) && \
-    export TOKEN_SECRET=$(cat /run/secrets/TOKEN_SECRET)
+    export TOKEN_SECRET=$(cat /run/secrets/TOKEN_SECRET) && ls /run/secrets
 
 RUN echo $TOKEN_SECRET && echo $SALT
 
