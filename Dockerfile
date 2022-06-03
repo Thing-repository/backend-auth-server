@@ -14,7 +14,7 @@ RUN go install github.com/swaggo/swag/cmd/swag@latest
 
 RUN swag init -g cmd/app/main.go
 
-RUN go build -o thing-repository -ldflags "-X main.tokenSecret=kjfdsfl;dfna,.hflsknz/;sdkjng;zlk/fm.c -X main.postgresPassword=110778 -X main.salt=sdfjksdfsgsdfgsdsdfs" ./cmd/app/main.go
+RUN go build -o thing-repository -ldflags "-X main.tokenSecret=$TOKEN_SECRET -X main.salt=$SALT" ./cmd/app/main.go
 
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
