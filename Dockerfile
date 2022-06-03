@@ -7,9 +7,6 @@ COPY ./ /thing-repository
 
 WORKDIR /thing-repository
 
-ARG TOKEN_SECRET
-ARG SALT
-
 # build go app
 RUN go mod download
 
@@ -28,5 +25,10 @@ WORKDIR /root/
 
 COPY --from=0 /thing-repository/thing-repository .
 COPY --from=0 /thing-repository/configs/ ./configs/
+
+RUN --mount=type=secret,id=SALT --mount=type=secret,id=TOKEN_SECRET  \
+    export THINGS_REPOSITORY_HASH_SALT=$(cat /run/secrets/SALT) && \
+    export THINGS_REPOSITORY_TOKEN_SECRET=$(cat /run/secrets/TOKEN_SECRET) && \
+    yarn gen
 
 CMD ["./thing-repository"]

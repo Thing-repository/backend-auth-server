@@ -73,7 +73,7 @@ jobs:
           tags: emil11078/thing-repository:latest
           platforms:
             linux/arm/v7
-          build-args: |
+          secrets: |
             SALT=${{ secrets.SALT }}
             TOKEN_SECRET=${{ secrets.TOKEN_SECRET }}
 
