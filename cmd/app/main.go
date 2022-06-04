@@ -21,7 +21,7 @@ import (
 // @contact.name Emil Islamov
 // @contact.email emil.islamov110778@gmail.com
 
-// @host https://thing-repository.emil110.keenetic.pro
+// @host thing-repository.emil110.keenetic.pro
 // @BasePath /api/v1
 
 // @securityDefinitions.apikey ApiKeyAuth
