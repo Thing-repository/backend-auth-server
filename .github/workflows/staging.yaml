@@ -73,9 +73,6 @@ jobs:
           tags: emil11078/thing-repository:latest
           platforms:
             linux/arm/v7
-          secrets: |
-            "SALT=${{ secrets.SALT }}"
-            "TOKEN_SECRET=${{ secrets.TOKEN_SECRET }}"
 
   deploy:
     name: 'Deploy to server'
@@ -86,7 +83,7 @@ jobs:
       - name: deploy to raspberry
         uses: appleboy/ssh-action@master
         with:
-          host: "92.255.206.17"
+          host: ${{ RASPBERRY_PI_SSH_HOST }}
           username: ${{ secrets.RASPBERRY_PI_USERNAME }}
           password: ${{ secrets.RASPBERRY_PI_PASSWORD }}
           script: |
