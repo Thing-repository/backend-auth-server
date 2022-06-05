@@ -135,8 +135,10 @@ func (u User) AddUser(user *core.AddUserDB) (*core.UserDB, error) {
 
 	ret := core.UserDB{
 		User: core.User{
-			UserBaseData: user.UserBaseData,
-			Id:           userId,
+			UserChange: core.UserChange{
+				UserBaseData: user.UserBaseData,
+			},
+			Id: userId,
 		},
 		PasswordHash: user.PasswordHash,
 	}
