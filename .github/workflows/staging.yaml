@@ -89,4 +89,4 @@ jobs:
           script: |
             cd thing-repository
             sudo docker pull emil11078/thing-repository:latest
-            sudo docker-compose restart
+            sudo docker-compose up thing-repository-app
