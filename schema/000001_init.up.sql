@@ -9,27 +9,24 @@ CREATE TABLE companies
 CREATE TABLE departments
 (
     id              serial primary key,
-    department_name varchar(255) not null,
+    department_name varchar(255) not null unique,
     image_url       varchar(255)
 );
 
 CREATE TABLE users
 (
-    id                       serial primary key,
-    first_name               varchar(255)          not null,
-    last_name                varchar(255)          not null,
-    email                    varchar(255)          not null unique,
-    image_url                varchar(255),
-    password_hash            varchar(255)          not null,
-    company_id               int references companies (id) on delete cascade,
-    department_id            int references departments (id) on delete cascade,
-    is_company_admin         boolean,
-    is_department_admin      boolean,
-    is_department_maintainer boolean,
-    vacation_time_start      timestamp,
-    vacation_time_end        timestamp,
-    email_is_validated       boolean default false not null,
-    email_validation_token   varchar(255)
+    id                     serial primary key,
+    first_name             varchar(255)          not null,
+    last_name              varchar(255)          not null,
+    email                  varchar(255)          not null unique,
+    image_url              varchar(255),
+    password_hash          varchar(255)          not null,
+    company_id             int references companies (id) on delete cascade,
+    department_id          int references departments (id) on delete cascade,
+    vacation_time_start    timestamp,
+    vacation_time_end      timestamp,
+    email_is_validated     boolean default false not null,
+    email_validation_token varchar(255)
 );
 
 CREATE TABLE companies_admins
@@ -40,6 +37,13 @@ CREATE TABLE companies_admins
 );
 
 CREATE TABLE departments_admins
+(
+    id            serial primary key,
+    user_id       int references users (id) on delete cascade       not null,
+    department_id int references departments (id) on delete cascade not null
+);
+
+CREATE TABLE department_maintainers
 (
     id            serial primary key,
     user_id       int references users (id) on delete cascade       not null,
@@ -71,5 +75,17 @@ CREATE TABLE using_things
     user_id    int references users (id)  not null,
     thing_id   int references things (id) not null,
     start_time timestamp                  not null,
-    end_time   timestamp
+    end_time   timestamp,
+    is_approve bool default false         not null,
+    is_taken  bool default false         not null
+);
+
+CREATE TABLE blocking_things
+(
+    id         serial primary key,
+    user_id    int references users (id)  not null,
+    thing_id   int references things (id) not null,
+    start_time timestamp                  not null,
+    end_time   timestamp,
+    reason     varchar(255)
 );
