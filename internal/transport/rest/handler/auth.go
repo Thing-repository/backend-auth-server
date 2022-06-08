@@ -42,7 +42,7 @@ func validatePassword(password string) error {
 // @Summary SignUp
 // @Tags auth
 // @Description This request for sign up user
-// @ID register
+// @ID signUp
 // @Accept json
 // @Produces json
 // @Param input body core.UserSignUpData true "user register info"
@@ -112,7 +112,7 @@ func (H *Handler) signUp(c *gin.Context) {
 // @Summary SignIn
 // @Tags auth
 // @Description This request for sign in user
-// @ID login
+// @ID signIn
 // @Accept json
 // @Produces json
 // @Param input body core.UserSignInData true "credentials"

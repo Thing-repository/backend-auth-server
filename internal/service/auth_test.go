@@ -43,19 +43,17 @@ func TestSignIn(t *testing.T) {
 			token:          "bar",
 			userDb: core.UserDB{
 				User: core.User{
-					UserBaseData: core.UserBaseData{
-						FirstName: "test_name",
-						LastName:  "test_last_name",
-						Email:     "foo@example.com",
+					UserChange: core.UserChange{
+						UserBaseData: core.UserBaseData{
+							FirstName: "test_name",
+							LastName:  "test_last_name",
+							Email:     "foo@example.com",
+						},
 					},
-					Id:                1,
-					ImageURL:          &testImageUrl,
-					CompanyId:         nil,
-					DepartmentId:      nil,
-					IsCompanyAdmin:    nil,
-					IsDepartmentAdmin: nil,
-					VacationTimeStart: nil,
-					VacationTimeEnd:   nil,
+					Id:           1,
+					ImageURL:     &testImageUrl,
+					CompanyId:    nil,
+					DepartmentId: nil,
 				},
 				PasswordHash: "test_password_hash",
 			},
@@ -88,19 +86,17 @@ func TestSignIn(t *testing.T) {
 			outputError: moduleErrors.ErrorServiceInvalidPassword,
 			userDb: core.UserDB{
 				User: core.User{
-					UserBaseData: core.UserBaseData{
-						FirstName: "test_name",
-						LastName:  "test_last_name",
-						Email:     "foo@example.com",
+					UserChange: core.UserChange{
+						UserBaseData: core.UserBaseData{
+							FirstName: "test_name",
+							LastName:  "test_last_name",
+							Email:     "foo@example.com",
+						},
 					},
-					Id:                1,
-					ImageURL:          &testImageUrl,
-					CompanyId:         nil,
-					DepartmentId:      nil,
-					IsCompanyAdmin:    nil,
-					IsDepartmentAdmin: nil,
-					VacationTimeStart: nil,
-					VacationTimeEnd:   nil,
+					Id:           1,
+					ImageURL:     &testImageUrl,
+					CompanyId:    nil,
+					DepartmentId: nil,
 				},
 				PasswordHash: "test_password_hash",
 			},

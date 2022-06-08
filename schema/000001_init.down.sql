@@ -1,9 +1,11 @@
+DROP TABLE blocking_things;
 DROP TABLE using_things;
 DROP TABLE things;
 DROP TYPE remainder_types;
 DROP TYPE thing_types;
 DROP TABLE departments_admins;
 DROP TABLE companies_admins;
+DROP TABLE department_maintainers;
 DROP TABLE users;
 DROP TABLE departments;
 DROP TABLE companies;

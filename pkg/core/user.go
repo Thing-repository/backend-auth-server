@@ -6,14 +6,17 @@ type UserBaseData struct {
 	Email     string `json:"email" binding:"required"`
 }
 
-type User struct {
+type UserChange struct {
 	UserBaseData
-	Id                int     `json:"id" binding:"required"`
-	ImageURL          *string `json:"image_url,omitempty"`
-	CompanyId         *int    `json:"company_id,omitempty"`
-	DepartmentId      *int    `json:"department_id,omitempty"`
-	IsCompanyAdmin    *bool   `json:"is_company_admin,omitempty"`
-	IsDepartmentAdmin *bool   `json:"is_department_admin,omitempty"`
 	VacationTimeStart *uint32 `json:"vacation_time_start,omitempty"`
 	VacationTimeEnd   *uint32 `json:"vacation_time_end,omitempty"`
+}
+
+type User struct {
+	UserChange
+	EmailIsValidated bool    `json:"email_is_validated"`
+	Id               int     `json:"id" binding:"required"`
+	ImageURL         *string `json:"image_url,omitempty"`
+	CompanyId        *int    `json:"company_id,omitempty"`
+	DepartmentId     *int    `json:"department_id,omitempty"`
 }

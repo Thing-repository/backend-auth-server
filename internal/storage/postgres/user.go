@@ -31,9 +31,7 @@ func (u User) GetUserByEmail(email string) (*core.UserDB, error) {
 				image_url, 
 				password_hash, 
 				company_id, 
-				department_id, 
-				is_company_admin, 
-				is_department_admin, 
+				department_id,
 				vacation_time_start, 
 				vacation_time_end 
 			FROM 
@@ -49,7 +47,7 @@ func (u User) GetUserByEmail(email string) (*core.UserDB, error) {
 
 	err := row.Scan(&userData.Id, &userData.FirstName, &userData.LastName, &userData.Email,
 		&userData.ImageURL, &userData.PasswordHash, &userData.CompanyId, &userData.DepartmentId,
-		&userData.IsCompanyAdmin, &userData.IsDepartmentAdmin, &userData.VacationTimeStart, &userData.VacationTimeEnd)
+		&userData.VacationTimeStart, &userData.VacationTimeEnd)
 	if err != nil {
 		switch err.Error() {
 		case "no rows in result set":
@@ -135,8 +133,10 @@ func (u User) AddUser(user *core.AddUserDB) (*core.UserDB, error) {
 
 	ret := core.UserDB{
 		User: core.User{
-			UserBaseData: user.UserBaseData,
-			Id:           userId,
+			UserChange: core.UserChange{
+				UserBaseData: user.UserBaseData,
+			},
+			Id: userId,
 		},
 		PasswordHash: user.PasswordHash,
 	}
