@@ -43,6 +43,22 @@ func (H *Handler) getThing(c *gin.Context) {
 // @Summary NOT IMPLEMENTED! Thing
 // @Security ApiKeyAuth
 // @Tags thing
+// @Description This request for getting all company thing
+// @ID getAllThing
+// @Accept json
+// @Produces json
+// @Success 200 {array} core.Thing
+// @Failure 400,401,403 {object} errorResponse
+// @Failure 500 {object} errorResponse
+// @Failure default {object} errorResponse
+// @Router /thing [get]
+func (H *Handler) getAllThing(c *gin.Context) {
+	newErrorResponse(c, http.StatusInternalServerError, "method not implemented")
+}
+
+// @Summary NOT IMPLEMENTED! Thing
+// @Security ApiKeyAuth
+// @Tags thing
 // @Description This request for edit thing info
 // @ID patchThing
 // @Accept json
