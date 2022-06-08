@@ -51,31 +51,30 @@ func TestHandler_signIn(t *testing.T) {
 				`"first_name":"test_name",` +
 				`"last_name":"test_last_name",` +
 				`"email":"test_email@foo.com",` +
+				`"vacation_time_start":1653484250,` +
+				`"vacation_time_end":1653484250,` +
+				`"email_is_validated":false,` +
 				`"id":0,` +
 				`"image_url":"test_image",` +
 				`"company_id":1,` +
 				`"department_id":2,` +
-				`"is_company_admin":true,` +
-				`"is_department_admin":true,` +
-				`"vacation_time_start":1653484250,` +
-				`"vacation_time_end":1653484250,` +
 				`"token":"test_token"` +
 				`}`,
 			outputResponse: core.SignInResponse{
 				User: core.User{
-					UserBaseData: core.UserBaseData{
-						FirstName: "test_name",
-						LastName:  "test_last_name",
-						Email:     "test_email@foo.com",
+					UserChange: core.UserChange{
+						UserBaseData: core.UserBaseData{
+							FirstName: "test_name",
+							LastName:  "test_last_name",
+							Email:     "test_email@foo.com",
+						},
+						VacationTimeStart: pointy.Uint32(1653484250),
+						VacationTimeEnd:   pointy.Uint32(1653484250),
 					},
-					Id:                0,
-					ImageURL:          &testImageUrl,
-					CompanyId:         pointy.Int(1),
-					DepartmentId:      pointy.Int(2),
-					IsCompanyAdmin:    pointy.Bool(true),
-					IsDepartmentAdmin: pointy.Bool(true),
-					VacationTimeStart: pointy.Uint32(1653484250),
-					VacationTimeEnd:   pointy.Uint32(1653484250),
+					Id:           0,
+					ImageURL:     &testImageUrl,
+					CompanyId:    pointy.Int(1),
+					DepartmentId: pointy.Int(2),
 				},
 				Token: "test_token",
 			},
@@ -175,25 +174,26 @@ func TestHandler_signUp(t *testing.T) {
 				`"first_name":"test_name",` +
 				`"last_name":"test_last_name",` +
 				`"email":"test@test.com",` +
+				`"email_is_validated":false,` +
 				`"id":0,` +
 				`"image_url":"test_image",` +
 				`"token":"test_token"` +
 				`}`,
 			outputResponse: core.SignInResponse{
 				User: core.User{
-					UserBaseData: core.UserBaseData{
-						FirstName: "test_name",
-						LastName:  "test_last_name",
-						Email:     "test@test.com",
+					UserChange: core.UserChange{
+						UserBaseData: core.UserBaseData{
+							FirstName: "test_name",
+							LastName:  "test_last_name",
+							Email:     "test@test.com",
+						},
+						VacationTimeStart: nil,
+						VacationTimeEnd:   nil,
 					},
-					Id:                0,
-					ImageURL:          &testImageUrl,
-					CompanyId:         nil,
-					DepartmentId:      nil,
-					IsCompanyAdmin:    nil,
-					IsDepartmentAdmin: nil,
-					VacationTimeStart: nil,
-					VacationTimeEnd:   nil,
+					Id:           0,
+					ImageURL:     &testImageUrl,
+					CompanyId:    nil,
+					DepartmentId: nil,
 				},
 				Token: "test_token",
 			},
