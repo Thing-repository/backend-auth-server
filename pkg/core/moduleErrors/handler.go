@@ -4,5 +4,6 @@ import "errors"
 
 var (
 	ErrorHandlerInvalidUsernameOrPassword = errors.New("invalid username or password")
-	ErrorInvalidEmail                     = errors.New("invalid email address")
+	ErrorHandlerInvalidEmail              = errors.New("invalid email address")
+	ErrorHandlerUserAlreadyHasCompany     = errors.New("user already has company")
 )
