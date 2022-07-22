@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"context"
+	"errors"
 	_ "github.com/Thing-repository/backend-server/docs"
 	"github.com/Thing-repository/backend-server/pkg/core"
 	"github.com/gin-gonic/gin"
@@ -9,18 +11,42 @@ import (
 )
 
 //go:generate mockgen -source=handler.go -destination=mocks/authMock.go
-type Auth interface {
+type auth interface {
 	SignIn(authData *core.UserSignInData) (*core.SignInResponse, error)
 	SignUp(authData *core.UserSignUpData) (*core.SignInResponse, error)
 }
 
-type Handler struct {
-	auth Auth
+//go:generate mockgen -source=handler.go -destination=mock/authMock.go
+type company interface {
+	AddCompany(companyAdd *core.CompanyBase, user *core.User) (*core.Company, error)
 }
 
-func NewHandler(auth Auth) *Handler {
+//go:generate mockgen -source=handler.go -destination=mock/authMock.go
+type token interface {
+	ValidateToken(token string) (int, error)
+}
+
+//go:generate mockgen -source=auth.go -destination=mock/authMock.go
+type userDB interface {
+	GetUser(ctx context.Context, userId int) (*core.UserDB, error)
+	//UserIsCompanyAdmin(userId int, companyId int) (bool, error)
+	//UserIsDepartmentAdmin(userId int, departmentId int) (bool, error)
+	//UserIsDepartmentMaintainer(userId int, departmentId int) (bool, error)
+}
+
+type Handler struct {
+	auth    auth
+	token   token
+	company company
+	userDB  userDB
+}
+
+func NewHandler(auth auth, company company, token token, userDB userDB) *Handler {
 	return &Handler{
-		auth: auth,
+		auth:    auth,
+		token:   token,
+		company: company,
+		userDB:  userDB,
 	}
 }
 
@@ -36,5 +62,24 @@ func (H *Handler) InitRoutes() *gin.Engine {
 			auth.POST("/sign-in", H.signIn)
 		}
 	}
+	apiPrivate := router.Group("/api/v1", H.userIdentity)
+	{
+		company := apiPrivate.Group("/company")
+		{
+			company.POST("", H.addCompany)
+		}
+	}
 	return router
+}
+
+func getUserId(c *gin.Context) (int, error) {
+	userId, ok := c.Get(userCtx)
+	if !ok {
+		return 0, errors.New("can't get user id")
+	}
+	id, ok := userId.(int)
+	if !ok {
+		return 0, errors.New("can't get user id")
+	}
+	return id, nil
 }
