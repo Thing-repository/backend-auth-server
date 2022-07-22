@@ -5,24 +5,44 @@ import (
 	"github.com/Thing-repository/backend-server/pkg/core"
 	"github.com/Thing-repository/backend-server/pkg/core/moduleErrors"
 	"github.com/jackc/pgconn"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v4"
 	"github.com/sirupsen/logrus"
 )
 
-type User struct {
-	db *pgxpool.Pool
+type dbDriverUserDB interface {
+	QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
+	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
 }
 
-func NewUser(db *pgxpool.Pool) *User {
-	return &User{db: db}
+type transactionDBUserDB interface {
+	ExtractTx(ctx context.Context) (pgx.Tx, bool)
 }
 
-func (u User) GetUserByEmail(email string) (*core.UserDB, error) {
+type UserDB struct {
+	dbDriver      dbDriverUserDB
+	transactionDB transactionDBUserDB
+}
+
+func NewUser(dbDriver dbDriverUserDB, transactionDB transactionDBUserDB) *UserDB {
+	return &UserDB{
+		dbDriver:      dbDriver,
+		transactionDB: transactionDB,
+	}
+}
+
+func (U *UserDB) GetUserByEmail(ctx context.Context, email string) (*core.UserDB, error) {
 	logBase := logrus.Fields{
 		"module":   "postgres",
 		"file":     "user.go",
 		"function": "GetUserByEmail",
 	}
+
+	db := U.dbDriver
+	tx, ok := U.transactionDB.ExtractTx(ctx)
+	if ok {
+		db = tx
+	}
+
 	query := `SELECT 
 				id, 
 				first_name, 
@@ -39,9 +59,7 @@ func (u User) GetUserByEmail(email string) (*core.UserDB, error) {
 			WHERE 
 				email = $1`
 
-	ctx := context.TODO()
-
-	row := u.db.QueryRow(ctx, query, email)
+	row := db.QueryRow(ctx, query, email)
 
 	var userData core.UserDB
 
@@ -70,16 +88,77 @@ func (u User) GetUserByEmail(email string) (*core.UserDB, error) {
 	return &userData, nil
 }
 
-func (u User) GetUser(userId int) (*core.UserDB, error) {
-	//TODO implement me
-	panic("implement me")
+func (U *UserDB) GetUser(ctx context.Context, userId int) (*core.UserDB, error) {
+	logBase := logrus.Fields{
+		"module":   "postgres",
+		"file":     "user.go",
+		"function": "GetUserByEmail",
+	}
+
+	db := U.dbDriver
+	tx, ok := U.transactionDB.ExtractTx(ctx)
+	if ok {
+		db = tx
+	}
+
+	query := `
+		SELECT 
+				id, 
+				first_name, 
+				last_name, 
+				email, 
+				image_url, 
+				password_hash, 
+				company_id, 
+				department_id,
+				vacation_time_start, 
+				vacation_time_end 
+			FROM 
+				users 
+			WHERE 
+				id = $1`
+
+	row := db.QueryRow(ctx, query, userId)
+
+	var userData core.UserDB
+
+	err := row.Scan(&userData.Id, &userData.FirstName, &userData.LastName, &userData.Email,
+		&userData.ImageURL, &userData.PasswordHash, &userData.CompanyId, &userData.DepartmentId,
+		&userData.VacationTimeStart, &userData.VacationTimeEnd)
+	if err != nil {
+		switch err.Error() {
+		case "no rows in result set":
+			logrus.WithFields(logrus.Fields{
+				"base":   logBase,
+				"userId": userId,
+				"query":  query,
+				"error":  err,
+			}).Error("user not found")
+			return nil, moduleErrors.ErrorDatabaseUserNotFound
+		default:
+			logrus.WithFields(logrus.Fields{
+				"base":   logBase,
+				"userId": userId,
+				"query":  query,
+				"error":  err,
+			}).Error("error get user by email")
+			return nil, err
+		}
+	}
+	return &userData, nil
 }
 
-func (u User) AddUser(user *core.AddUserDB) (*core.UserDB, error) {
+func (U *UserDB) AddUser(ctx context.Context, user *core.AddUserDB) (*core.UserDB, error) {
 	logBase := logrus.Fields{
 		"module":   "postgres",
 		"file":     "user.go",
 		"function": "AddUser",
+	}
+
+	db := U.dbDriver
+	tx, ok := U.transactionDB.ExtractTx(ctx)
+	if ok {
+		db = tx
 	}
 
 	query := `
@@ -90,9 +169,7 @@ func (u User) AddUser(user *core.AddUserDB) (*core.UserDB, error) {
 				RETURNING 
 					id`
 
-	ctx := context.TODO()
-
-	row := u.db.QueryRow(ctx, query, user.FirstName, user.LastName, user.Email, user.PasswordHash)
+	row := db.QueryRow(ctx, query, user.FirstName, user.LastName, user.Email, user.PasswordHash)
 
 	var userId int
 	if err := row.Scan(&userId); err != nil {
@@ -142,4 +219,9 @@ func (u User) AddUser(user *core.AddUserDB) (*core.UserDB, error) {
 	}
 
 	return &ret, nil
+}
+
+func (U *UserDB) PathUser(ctx context.Context, user *core.UserDB) (*core.UserDB, error) {
+	//TODO implement me
+	panic("implement me")
 }
