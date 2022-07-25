@@ -46,7 +46,7 @@ func (D *DepartmentDB) AddDepartment(ctx context.Context, departmentBase *core.D
 				RETURNING 
 					id`
 
-	row := db.QueryRow(ctx, query, departmentBase)
+	row := db.QueryRow(ctx, query, departmentBase.DepartmentName)
 
 	var departmentId int
 
@@ -55,21 +55,22 @@ func (D *DepartmentDB) AddDepartment(ctx context.Context, departmentBase *core.D
 			switch pgErr.Code {
 			default:
 				logrus.WithFields(logrus.Fields{
-					"base":        logBase,
-					"companyBase": departmentBase,
-					"massage":     pgErr.Message,
-					"where":       pgErr.Where,
-					"detail":      pgErr.Detail,
-					"code":        pgErr.Code,
-					"query":       query,
+					"base":           logBase,
+					"departmentBase": departmentBase,
+					"massage":        pgErr.Message,
+					"where":          pgErr.Where,
+					"detail":         pgErr.Detail,
+					"code":           pgErr.Code,
+					"query":          query,
 				}).Error("error add department to postgres")
 				return nil, err
 			}
 		} else {
 			logrus.WithFields(logrus.Fields{
-				"base":  logBase,
-				"query": query,
-				"error": err,
+				"base":           logBase,
+				"query":          query,
+				"error":          err,
+				"departmentBase": departmentBase,
 			}).Error("error add department to postgres")
 			return nil, err
 		}
