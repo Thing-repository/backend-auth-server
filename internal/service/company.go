@@ -10,7 +10,7 @@ const departmentHeadName = "Head"
 
 //go:generate mockgen -source=auth.go -destination=mock/authMock.go
 type userDBTransaction interface {
-	PathUser(ctx context.Context, user *core.UserDB) (*core.UserDB, error)
+	PathUser(ctx context.Context, user *core.UserDB) error
 }
 
 type companyDBTransaction interface {
@@ -23,12 +23,14 @@ type departmentDBTransaction interface {
 
 type rightsDBTransaction interface {
 	AddCompanyAdmin(ctx context.Context, userId int, companyId int) (*core.CompanyManager, error)
+	AddDepartmentAdmin(ctx context.Context, userId int, departmentId int) (*core.DepartmentManager, error)
 }
 
 type transactionDBTransaction interface {
 	InjectTx(ctx context.Context) (context.Context, error)
 	CommitTx(ctx context.Context) error
 	RollbackTx(ctx context.Context) error
+	RollbackTxDefer(ctx context.Context)
 }
 
 type Company struct {
@@ -64,6 +66,8 @@ func (C *Company) AddCompany(companyAdd *core.CompanyBase, user *core.User) (*co
 		return nil, err
 	}
 
+	defer C.transactionDB.RollbackTxDefer(ctx)
+
 	companyData, err := C.companyDB.AddCompany(ctx, companyAdd)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
@@ -88,7 +92,7 @@ func (C *Company) AddCompany(companyAdd *core.CompanyBase, user *core.User) (*co
 		return nil, err
 	}
 
-	_, err = C.rightsDB.AddCompanyAdmin(ctx, user.Id, companyData.Id)
+	_, err = C.rightsDB.AddCompanyAdmin(ctx, *user.Id, companyData.Id)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":      logBase,
@@ -99,20 +103,40 @@ func (C *Company) AddCompany(companyAdd *core.CompanyBase, user *core.User) (*co
 		return nil, err
 	}
 
+	_, err = C.rightsDB.AddDepartmentAdmin(ctx, *user.Id, departmentData.Id)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"base":      logBase,
+			"userId":    user.Id,
+			"companyId": departmentData.Id,
+			"error":     err.Error(),
+		}).Error("error add department admin to database")
+		return nil, err
+	}
+
 	newUserDb := &core.UserDB{
 		User: core.User{
+			Id:           user.Id,
 			CompanyId:    &companyData.Id,
 			DepartmentId: &departmentData.Id,
 		},
 	}
 
-	_, err = C.userDB.PathUser(ctx, newUserDb)
+	err = C.userDB.PathUser(ctx, newUserDb)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":      logBase,
 			"newUserDb": newUserDb,
 			"error":     err.Error(),
 		}).Error("error change user data in database")
+		return nil, err
+	}
+
+	if err = C.transactionDB.CommitTx(ctx); err != nil {
+		logrus.WithFields(logrus.Fields{
+			"base":  logBase,
+			"error": err.Error(),
+		}).Error("error commit transaction")
 		return nil, err
 	}
 
