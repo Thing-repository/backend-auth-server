@@ -82,13 +82,7 @@ func (T *Transaction) RollbackTx(ctx context.Context) error {
 		return moduleErrors.ErrorDataBaseGetTransaction
 	}
 
-	if err := tx.Rollback(ctx); err != nil {
-		logrus.WithFields(logrus.Fields{
-			"base":  logBase,
-			"error": err.Error(),
-		}).Error("error rollback transaction")
-		return err
-	}
+	_ = tx.Rollback(ctx)
 
 	return nil
 }
