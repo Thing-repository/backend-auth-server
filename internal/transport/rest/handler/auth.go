@@ -68,7 +68,7 @@ func (H *Handler) signUp(c *gin.Context) {
 		return
 	}
 
-	if err := validateEmail(input.Email); err != nil {
+	if err := validateEmail(*input.Email); err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":  logBase,
 			"error": err.Error(),
