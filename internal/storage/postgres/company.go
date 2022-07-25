@@ -43,7 +43,7 @@ func (C *CompanyDB) AddCompany(ctx context.Context, companyBase *core.CompanyBas
 	}
 
 	query := `
-				INSERT INTO company
+				INSERT INTO companies
 				    (company_name, address) 
 				VALUES 
 				    ($1, $2) 
