@@ -65,7 +65,7 @@ func (a *AuthService) SignIn(authData *core.UserSignInData) (*core.SignInRespons
 	}
 
 	// validation password
-	err = a.hash.ValidateHash(userData.PasswordHash, authData.UserPassword)
+	err = a.hash.ValidateHash(*userData.PasswordHash, authData.UserPassword)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":  logBase,
@@ -80,7 +80,7 @@ func (a *AuthService) SignIn(authData *core.UserSignInData) (*core.SignInRespons
 	}
 
 	//generate token
-	token, err := a.token.GenerateToken(userData.Id)
+	token, err := a.token.GenerateToken(*userData.Id)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":   logBase,
@@ -142,7 +142,7 @@ func (a *AuthService) SignUp(authData *core.UserSignUpData) (*core.SignInRespons
 		}
 	}
 
-	token, err := a.token.GenerateToken(userData.Id)
+	token, err := a.token.GenerateToken(*userData.Id)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":   logBase,
