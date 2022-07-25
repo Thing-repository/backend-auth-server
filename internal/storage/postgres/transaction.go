@@ -86,3 +86,7 @@ func (T *Transaction) RollbackTx(ctx context.Context) error {
 
 	return nil
 }
+
+func (T *Transaction) RollbackTxDefer(ctx context.Context) {
+	_ = T.RollbackTx(ctx)
+}
