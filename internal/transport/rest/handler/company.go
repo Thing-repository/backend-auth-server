@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-// @Summary NOT IMPLEMENTED! company
+// @Summary company
 // @Security ApiKeyAuth
 // @Tags company
 // @Description This request for creating company
