@@ -39,8 +39,8 @@ func (R *RightsDB) AddCompanyAdmin(ctx context.Context, userId int, companyId in
 	}
 
 	query := `
-			INSERT INTO companies_admin	
-				(userId, companyId)
+			INSERT INTO companies_admins	
+				(user_id, company_id)
 			VALUES 
 				($1, $2)
 			RETURNING 
@@ -82,6 +82,66 @@ func (R *RightsDB) AddCompanyAdmin(ctx context.Context, userId int, companyId in
 		Id:        companyAdminId,
 		UserId:    userId,
 		CompanyId: companyId,
+	}, nil
+
+}
+
+func (R *RightsDB) AddDepartmentAdmin(ctx context.Context, userId int, departmentId int) (*core.DepartmentManager, error) {
+	logBase := logrus.Fields{
+		"module":   "postgres",
+		"function": "AddDepartmentAdmin",
+	}
+
+	db := R.dbDriver
+	tx, ok := R.transactionDB.ExtractTx(ctx)
+	if ok {
+		db = tx
+	}
+
+	query := `
+			INSERT INTO departments_admins	
+				(user_id, department_id)
+			VALUES 
+				($1, $2)
+			RETURNING 
+				id`
+
+	row := db.QueryRow(ctx, query, userId, departmentId)
+
+	var companyAdminId int
+
+	if err := row.Scan(&companyAdminId); err != nil {
+		if pgErr, ok := err.(*pgconn.PgError); ok {
+			switch pgErr.Code {
+			default:
+				logrus.WithFields(logrus.Fields{
+					"base":      logBase,
+					"userId":    userId,
+					"companyId": departmentId,
+					"massage":   pgErr.Message,
+					"where":     pgErr.Where,
+					"detail":    pgErr.Detail,
+					"code":      pgErr.Code,
+					"query":     query,
+				}).Error("error add department admin to postgres")
+				return nil, err
+			}
+		} else {
+			logrus.WithFields(logrus.Fields{
+				"base":      logBase,
+				"userId":    userId,
+				"companyId": departmentId,
+				"query":     query,
+				"error":     err,
+			}).Error("error add department admin to postgres")
+			return nil, err
+		}
+	}
+
+	return &core.DepartmentManager{
+		Id:           companyAdminId,
+		UserId:       userId,
+		DepartmentId: departmentId,
 	}, nil
 
 }
