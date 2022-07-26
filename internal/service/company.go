@@ -15,6 +15,9 @@ type userDBTransaction interface {
 
 type companyDBTransaction interface {
 	AddCompany(ctx context.Context, companyBase *core.CompanyBase) (*core.Company, error)
+	GetCompany(ctx context.Context, companyId int) (*core.Company, error)
+	UpdateCompany(ctx context.Context, company core.Company) error
+	DeleteCompany(ctx context.Context, companyId int) error
 }
 
 type departmentDBTransaction interface {
@@ -93,7 +96,7 @@ func (C *Company) AddCompany(companyAdd *core.CompanyBase, user *core.User) (*co
 		return nil, err
 	}
 
-	_, err = C.rightsDB.AddCompanyAdmin(ctx, *user.Id, companyData.Id)
+	_, err = C.rightsDB.AddCompanyAdmin(ctx, user.Id, companyData.Id)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":      logBase,
@@ -104,7 +107,7 @@ func (C *Company) AddCompany(companyAdd *core.CompanyBase, user *core.User) (*co
 		return nil, err
 	}
 
-	_, err = C.rightsDB.AddDepartmentAdmin(ctx, *user.Id, departmentData.Id)
+	_, err = C.rightsDB.AddDepartmentAdmin(ctx, user.Id, departmentData.Id)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":      logBase,
@@ -142,4 +145,73 @@ func (C *Company) AddCompany(companyAdd *core.CompanyBase, user *core.User) (*co
 	}
 
 	return companyData, nil
+}
+
+func (C *Company) GetCompany(companyId int) (*core.Company, error) {
+	logBase := logrus.Fields{
+		"module":   "service",
+		"function": "GetCompany",
+	}
+
+	ctx := context.TODO()
+
+	companyData, err := C.companyDB.GetCompany(ctx, companyId)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"base":      logBase,
+			"companyId": companyId,
+			"error":     err.Error(),
+		}).Error("error add company to database")
+		return nil, err
+	}
+
+	return companyData, nil
+}
+
+func (C *Company) UpdateCompany(companyBase core.CompanyBase, companyId int) (*core.Company, error) {
+	logBase := logrus.Fields{
+		"module":   "service",
+		"function": "UpdateCompany",
+	}
+
+	ctx := context.TODO()
+
+	company := core.Company{
+		CompanyBase: companyBase,
+		Id:          companyId,
+	}
+
+	err := C.companyDB.UpdateCompany(ctx, company)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"base":        logBase,
+			"companyId":   companyId,
+			"companyBase": companyBase,
+			"error":       err.Error(),
+		}).Error("error update company in database")
+		return nil, err
+	}
+
+	return &company, nil
+}
+
+func (C *Company) DeleteCompany(companyId int) error {
+	logBase := logrus.Fields{
+		"module":   "service",
+		"function": "UpdateCompany",
+	}
+
+	ctx := context.TODO()
+
+	err := C.companyDB.DeleteCompany(ctx, companyId)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"base":      logBase,
+			"companyId": companyId,
+			"error":     err.Error(),
+		}).Error("error delete company from database")
+		return err
+	}
+
+	return nil
 }
