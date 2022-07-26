@@ -6,6 +6,7 @@ DROP TYPE thing_types;
 DROP TABLE departments_admins;
 DROP TABLE companies_admins;
 DROP TABLE department_maintainers;
+DROP TABLE vacations;
 DROP TABLE users;
 DROP TABLE departments;
 DROP TABLE companies;
