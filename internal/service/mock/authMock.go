@@ -5,6 +5,7 @@
 package mock_service
 
 import (
+	context "context"
 	reflect "reflect"
 
 	core "github.com/Thing-repository/backend-server/pkg/core"
@@ -47,21 +48,6 @@ func (m *Mocktoken) GenerateToken(userId int) (string, error) {
 func (mr *MocktokenMockRecorder) GenerateToken(userId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateToken", reflect.TypeOf((*Mocktoken)(nil).GenerateToken), userId)
-}
-
-// ValidateToken mocks base method.
-func (m *Mocktoken) ValidateToken(token string) (int, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateToken", token)
-	ret0, _ := ret[0].(int)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ValidateToken indicates an expected call of ValidateToken.
-func (mr *MocktokenMockRecorder) ValidateToken(token interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateToken", reflect.TypeOf((*Mocktoken)(nil).ValidateToken), token)
 }
 
 // Mockhash is a mock of hash interface.
@@ -116,70 +102,70 @@ func (mr *MockhashMockRecorder) ValidateHash(hash, password interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateHash", reflect.TypeOf((*Mockhash)(nil).ValidateHash), hash, password)
 }
 
-// Mockdb is a mock of db interface.
-type Mockdb struct {
+// MockuserDB is a mock of userDB interface.
+type MockuserDB struct {
 	ctrl     *gomock.Controller
-	recorder *MockdbMockRecorder
+	recorder *MockuserDBMockRecorder
 }
 
-// MockdbMockRecorder is the mock recorder for Mockdb.
-type MockdbMockRecorder struct {
-	mock *Mockdb
+// MockuserDBMockRecorder is the mock recorder for MockuserDB.
+type MockuserDBMockRecorder struct {
+	mock *MockuserDB
 }
 
-// NewMockdb creates a new mock instance.
-func NewMockdb(ctrl *gomock.Controller) *Mockdb {
-	mock := &Mockdb{ctrl: ctrl}
-	mock.recorder = &MockdbMockRecorder{mock}
+// NewMockuserDB creates a new mock instance.
+func NewMockuserDB(ctrl *gomock.Controller) *MockuserDB {
+	mock := &MockuserDB{ctrl: ctrl}
+	mock.recorder = &MockuserDBMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *Mockdb) EXPECT() *MockdbMockRecorder {
+func (m *MockuserDB) EXPECT() *MockuserDBMockRecorder {
 	return m.recorder
 }
 
 // AddUser mocks base method.
-func (m *Mockdb) AddUser(user *core.AddUserDB) (*core.UserDB, error) {
+func (m *MockuserDB) AddUser(ctx context.Context, user *core.AddUserDB) (*core.UserDB, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddUser", user)
+	ret := m.ctrl.Call(m, "AddUser", ctx, user)
 	ret0, _ := ret[0].(*core.UserDB)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AddUser indicates an expected call of AddUser.
-func (mr *MockdbMockRecorder) AddUser(user interface{}) *gomock.Call {
+func (mr *MockuserDBMockRecorder) AddUser(ctx, user interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUser", reflect.TypeOf((*Mockdb)(nil).AddUser), user)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUser", reflect.TypeOf((*MockuserDB)(nil).AddUser), ctx, user)
 }
 
 // GetUser mocks base method.
-func (m *Mockdb) GetUser(userId int) (*core.UserDB, error) {
+func (m *MockuserDB) GetUser(ctx context.Context, userId int) (*core.UserDB, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUser", userId)
+	ret := m.ctrl.Call(m, "GetUser", ctx, userId)
 	ret0, _ := ret[0].(*core.UserDB)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetUser indicates an expected call of GetUser.
-func (mr *MockdbMockRecorder) GetUser(userId interface{}) *gomock.Call {
+func (mr *MockuserDBMockRecorder) GetUser(ctx, userId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*Mockdb)(nil).GetUser), userId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockuserDB)(nil).GetUser), ctx, userId)
 }
 
 // GetUserByEmail mocks base method.
-func (m *Mockdb) GetUserByEmail(email string) (*core.UserDB, error) {
+func (m *MockuserDB) GetUserByEmail(ctx context.Context, email string) (*core.UserDB, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserByEmail", email)
+	ret := m.ctrl.Call(m, "GetUserByEmail", ctx, email)
 	ret0, _ := ret[0].(*core.UserDB)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetUserByEmail indicates an expected call of GetUserByEmail.
-func (mr *MockdbMockRecorder) GetUserByEmail(email interface{}) *gomock.Call {
+func (mr *MockuserDBMockRecorder) GetUserByEmail(ctx, email interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByEmail", reflect.TypeOf((*Mockdb)(nil).GetUserByEmail), email)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByEmail", reflect.TypeOf((*MockuserDB)(nil).GetUserByEmail), ctx, email)
 }
