@@ -2,6 +2,7 @@ package core
 
 type DepartmentBase struct {
 	DepartmentName string `json:"department_name" binding:"required"`
+	CompanyId      int    `json:"company_id" binding:"required"`
 }
 
 type Department struct {
