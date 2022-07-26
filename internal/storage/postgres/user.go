@@ -327,3 +327,87 @@ func (U *UserDB) PathUser(ctx context.Context, user *core.UserDB) error {
 
 	return nil
 }
+
+func (U *UserDB) UserInCompany(ctx context.Context, companyId int) ([]int, error) {
+	logBase := logrus.Fields{
+		"module":   "postgres",
+		"file":     "user.go",
+		"function": "UserInCompany",
+	}
+
+	db := U.dbDriver
+	tx, ok := U.transactionDB.ExtractTx(ctx)
+	if ok {
+		db = tx
+	}
+
+	query := `
+		SELECT 
+			id
+		FROM 
+			users 
+		WHERE 
+			company_id = $1`
+
+	var ret []int
+	rows, err := db.Query(ctx, query, companyId)
+
+	if err != nil {
+		if pgErr, ok := err.(*pgconn.PgError); ok {
+			switch pgErr.Code {
+			default:
+				logrus.WithFields(logrus.Fields{
+					"base":      logBase,
+					"massage":   pgErr.Message,
+					"where":     pgErr.Where,
+					"detail":    pgErr.Detail,
+					"code":      pgErr.Code,
+					"query":     logQuery(query),
+					"companyId": companyId,
+				}).Error("error find user in company")
+				return nil, err
+			}
+		} else {
+			logrus.WithFields(logrus.Fields{
+				"base":      logBase,
+				"query":     logQuery(query),
+				"error":     err,
+				"companyId": companyId,
+			}).Error("error find user in company")
+			return nil, err
+		}
+	}
+
+	for rows.Next() {
+		var id int
+		err = rows.Scan(&id)
+		if err != nil {
+			if pgErr, ok := err.(*pgconn.PgError); ok {
+				switch pgErr.Code {
+				default:
+					logrus.WithFields(logrus.Fields{
+						"base":      logBase,
+						"massage":   pgErr.Message,
+						"where":     pgErr.Where,
+						"detail":    pgErr.Detail,
+						"code":      pgErr.Code,
+						"query":     logQuery(query),
+						"companyId": companyId,
+					}).Error("error scan rows")
+					return nil, err
+				}
+			} else {
+				logrus.WithFields(logrus.Fields{
+					"base":      logBase,
+					"query":     logQuery(query),
+					"error":     err,
+					"companyId": companyId,
+				}).Error("error scan rows")
+				return nil, err
+			}
+		}
+		ret = append(ret, id)
+	}
+
+	return ret, nil
+}
