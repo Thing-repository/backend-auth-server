@@ -63,14 +63,23 @@ func main() {
 		}).Fatal("error connect to postgres database")
 	}
 
-	userDb := postgres.NewUser(postgresDb)
+	transaction := postgres.NewTransaction(postgresDb)
 
+	// DB modules
+	userDb := postgres.NewUser(postgresDb, transaction)
+	companyDb := postgres.NewCompanyDB(postgresDb, transaction)
+	departmentDB := postgres.NewDepartmentDB(postgresDb, transaction)
+	rightsDB := postgres.NewRightsDB(postgresDb, transaction)
+
+	// helper modules
 	tokenGenerator := generateToken.NewToken([]byte(tokenSecret))
 	hashGenerator := userHash.NewHash(salt)
 
+	// service modules
 	authService := service.NewAuth(tokenGenerator, userDb, hashGenerator)
+	companyService := service.NewCompany(userDb, companyDb, departmentDB, rightsDB, transaction)
 
-	httpHandler := restHandler.NewHandler(authService)
+	httpHandler := restHandler.NewHandler(authService, companyService, tokenGenerator, userDb)
 	httpServer := rest.NewHttpServer()
 
 	if err := httpServer.Run(httpPort, httpHandler.InitRoutes()); err != nil {
@@ -270,7 +279,7 @@ func initConfig() {
 		logrus.WithFields(logrus.Fields{
 			"base":           logBase,
 			"postgresDBName": postgresCfg.DBName,
-		}).Warning("use postgres DB name from config")
+		}).Warning("use postgres userDB name from config")
 	}
 
 	if postgresCfg.Username == "" {

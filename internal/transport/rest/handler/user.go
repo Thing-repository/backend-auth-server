@@ -45,7 +45,7 @@ func (H *Handler) getUser(c *gin.Context) {
 // @ID patchCurrentUser
 // @Accept json
 // @Produces json
-// @Param input body core.UserChange true "user info"
+// @Param input body core.UserBaseData true "user info"
 // @Success 200 {object} core.User
 // @Failure 400,401 {object} errorResponse
 // @Failure 500 {object} errorResponse
@@ -63,7 +63,7 @@ func (H *Handler) patchCurrentUser(c *gin.Context) {
 // @Accept json
 // @Produces json
 // @Param id path int true "user id"
-// @Param input body core.UserChange true "user info"
+// @Param input body core.UserBaseData true "user info"
 // @Success 200 {object} core.User
 // @Failure 400,401,403 {object} errorResponse
 // @Failure 500 {object} errorResponse

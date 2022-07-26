@@ -6,6 +6,7 @@ import (
 	"github.com/Thing-repository/backend-server/pkg/utils"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/sirupsen/logrus"
+	"strings"
 	"time"
 )
 
@@ -62,4 +63,9 @@ func NewPostgresDB(ctx context.Context, cfg Config) (*pgxpool.Pool, error) {
 
 	return pool, nil
 
+}
+
+func logQuery(query string) string {
+	query = strings.ReplaceAll(query, "\n", "")
+	return strings.ReplaceAll(query, "\t", "")
 }

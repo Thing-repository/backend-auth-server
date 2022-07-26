@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"github.com/Thing-repository/backend-server/pkg/core"
 	"github.com/Thing-repository/backend-server/pkg/core/moduleErrors"
 	"github.com/sirupsen/logrus"
@@ -9,7 +10,6 @@ import (
 //go:generate mockgen -source=auth.go -destination=mock/authMock.go
 type token interface {
 	GenerateToken(userId int) (string, error)
-	ValidateToken(token string) (int, error)
 }
 
 //go:generate mockgen -source=auth.go -destination=mock/authMock.go
@@ -19,34 +19,36 @@ type hash interface {
 }
 
 //go:generate mockgen -source=auth.go -destination=mock/authMock.go
-type db interface {
-	GetUserByEmail(email string) (*core.UserDB, error)
-	GetUser(userId int) (*core.UserDB, error)
-	AddUser(user *core.AddUserDB) (*core.UserDB, error)
+type userDB interface {
+	GetUserByEmail(ctx context.Context, email string) (*core.UserDB, error)
+	GetUser(ctx context.Context, userId int) (*core.UserDB, error)
+	AddUser(ctx context.Context, user *core.AddUserDB) (*core.UserDB, error)
 }
 
-type Auth struct {
+type AuthService struct {
 	token token
-	db    db
+	db    userDB
 	hash  hash
 }
 
-func NewAuth(token token, db db, hash hash) *Auth {
-	return &Auth{
+func NewAuth(token token, db userDB, hash hash) *AuthService {
+	return &AuthService{
 		token: token,
 		db:    db,
 		hash:  hash,
 	}
 }
 
-func (a *Auth) SignIn(authData *core.UserSignInData) (*core.SignInResponse, error) {
+func (a *AuthService) SignIn(authData *core.UserSignInData) (*core.SignInResponse, error) {
 	logBase := logrus.Fields{
 		"module":   "service",
 		"function": "signIn",
 	}
 
+	ctx := context.TODO()
+
 	// get user data
-	userData, err := a.db.GetUserByEmail(authData.UserMail)
+	userData, err := a.db.GetUserByEmail(ctx, authData.UserMail)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":  logBase,
@@ -63,7 +65,7 @@ func (a *Auth) SignIn(authData *core.UserSignInData) (*core.SignInResponse, erro
 	}
 
 	// validation password
-	err = a.hash.ValidateHash(userData.PasswordHash, authData.UserPassword)
+	err = a.hash.ValidateHash(*userData.PasswordHash, authData.UserPassword)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":  logBase,
@@ -97,7 +99,7 @@ func (a *Auth) SignIn(authData *core.UserSignInData) (*core.SignInResponse, erro
 	}, nil
 }
 
-func (a *Auth) SignUp(authData *core.UserSignUpData) (*core.SignInResponse, error) {
+func (a *AuthService) SignUp(authData *core.UserSignUpData) (*core.SignInResponse, error) {
 	logBase := logrus.Fields{
 		"module":   "service",
 		"function": "signUp",
@@ -123,8 +125,10 @@ func (a *Auth) SignUp(authData *core.UserSignUpData) (*core.SignInResponse, erro
 	// add hash to data
 	userDb.PasswordHash = hash
 
+	ctx := context.TODO()
+
 	// add user to database
-	userData, err := a.db.AddUser(&userDb)
+	userData, err := a.db.AddUser(ctx, &userDb)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":  logBase,
