@@ -40,13 +40,13 @@ func (D *DepartmentDB) AddDepartment(ctx context.Context, departmentBase *core.D
 
 	query := `
 				INSERT INTO departments
-				    (department_name) 
+				    (department_name, company_id) 
 				VALUES 
-				    ($1) 
+				    ($1, $2) 
 				RETURNING 
 					id`
 
-	row := db.QueryRow(ctx, query, departmentBase.DepartmentName)
+	row := db.QueryRow(ctx, query, departmentBase.DepartmentName, departmentBase.CompanyId)
 
 	var departmentId int
 

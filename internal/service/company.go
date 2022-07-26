@@ -80,6 +80,7 @@ func (C *Company) AddCompany(companyAdd *core.CompanyBase, user *core.User) (*co
 
 	departmentAdd := &core.DepartmentBase{
 		DepartmentName: departmentHeadName,
+		CompanyId:      companyData.Id,
 	}
 
 	departmentData, err := C.departmentDB.AddDepartment(ctx, departmentAdd)
