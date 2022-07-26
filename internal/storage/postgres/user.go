@@ -54,9 +54,7 @@ func (U *UserDB) GetUserByEmail(ctx context.Context, email string) (*core.UserDB
 				image_url, 
 				password_hash, 
 				company_id, 
-				department_id,
-				vacation_time_start, 
-				vacation_time_end 
+				department_id
 			FROM 
 				users 
 			WHERE 
@@ -67,8 +65,7 @@ func (U *UserDB) GetUserByEmail(ctx context.Context, email string) (*core.UserDB
 	var userData core.UserDB
 
 	err := row.Scan(&userData.Id, &userData.FirstName, &userData.LastName, &userData.Email,
-		&userData.ImageURL, &userData.PasswordHash, &userData.CompanyId, &userData.DepartmentId,
-		&userData.VacationTimeStart, &userData.VacationTimeEnd)
+		&userData.ImageURL, &userData.PasswordHash, &userData.CompanyId, &userData.DepartmentId)
 	if err != nil {
 		switch err.Error() {
 		case "no rows in result set":
@@ -113,9 +110,7 @@ func (U *UserDB) GetUser(ctx context.Context, userId int) (*core.UserDB, error) 
 				image_url, 
 				password_hash, 
 				company_id, 
-				department_id,
-				vacation_time_start, 
-				vacation_time_end 
+				department_id
 			FROM 
 				users 
 			WHERE 
@@ -126,8 +121,7 @@ func (U *UserDB) GetUser(ctx context.Context, userId int) (*core.UserDB, error) 
 	var userData core.UserDB
 
 	err := row.Scan(&userData.Id, &userData.FirstName, &userData.LastName, &userData.Email,
-		&userData.ImageURL, &userData.PasswordHash, &userData.CompanyId, &userData.DepartmentId,
-		&userData.VacationTimeStart, &userData.VacationTimeEnd)
+		&userData.ImageURL, &userData.PasswordHash, &userData.CompanyId, &userData.DepartmentId)
 	if err != nil {
 		switch err.Error() {
 		case "no rows in result set":
@@ -213,10 +207,8 @@ func (U *UserDB) AddUser(ctx context.Context, user *core.AddUserDB) (*core.UserD
 
 	ret := core.UserDB{
 		User: core.User{
-			UserChange: core.UserChange{
-				UserBaseData: user.UserBaseData,
-			},
-			Id: &userId,
+			UserBaseData: user.UserBaseData,
+			Id:           userId,
 		},
 		PasswordHash: &user.PasswordHash,
 	}
@@ -241,49 +233,39 @@ func (U *UserDB) PathUser(ctx context.Context, user *core.UserDB) error {
 	args := make([]interface{}, 0)
 	argId := 1
 
-	if user.User.UserChange.UserBaseData.FirstName != nil {
+	if user.FirstName != nil {
 		setValues = append(setValues, fmt.Sprintf("first_name = $%d", argId))
-		args = append(args, *user.User.UserChange.UserBaseData.FirstName)
+		args = append(args, *user.FirstName)
 		argId++
 	}
-	if user.User.UserChange.UserBaseData.LastName != nil {
+	if user.LastName != nil {
 		setValues = append(setValues, fmt.Sprintf("last_name = $%d", argId))
-		args = append(args, *user.User.UserChange.UserBaseData.LastName)
+		args = append(args, *user.LastName)
 		argId++
 	}
-	if user.User.UserChange.UserBaseData.Email != nil {
+	if user.Email != nil {
 		setValues = append(setValues, fmt.Sprintf("email = $%d", argId))
-		args = append(args, *user.User.UserChange.UserBaseData.Email)
+		args = append(args, *user.Email)
 		argId++
 	}
-	if user.User.UserChange.VacationTimeStart != nil {
-		setValues = append(setValues, fmt.Sprintf("vacation_time_start = $%d", argId))
-		args = append(args, *user.User.UserChange.VacationTimeStart)
-		argId++
-	}
-	if user.User.UserChange.VacationTimeEnd != nil {
-		setValues = append(setValues, fmt.Sprintf("vacation_time_end = $%d", argId))
-		args = append(args, *user.User.UserChange.VacationTimeEnd)
-		argId++
-	}
-	if user.User.EmailIsValidated != nil {
+	if user.EmailIsValidated != nil {
 		setValues = append(setValues, fmt.Sprintf("email_is_validated = $%d", argId))
-		args = append(args, *user.User.EmailIsValidated)
+		args = append(args, *user.EmailIsValidated)
 		argId++
 	}
-	if user.User.ImageURL != nil {
+	if user.ImageURL != nil {
 		setValues = append(setValues, fmt.Sprintf("image_url = $%d", argId))
-		args = append(args, *user.User.ImageURL)
+		args = append(args, *user.ImageURL)
 		argId++
 	}
-	if user.User.CompanyId != nil {
+	if user.CompanyId != nil {
 		setValues = append(setValues, fmt.Sprintf("company_id = $%d", argId))
-		args = append(args, *user.User.CompanyId)
+		args = append(args, *user.CompanyId)
 		argId++
 	}
-	if user.User.DepartmentId != nil {
+	if user.DepartmentId != nil {
 		setValues = append(setValues, fmt.Sprintf("department_id = $%d", argId))
-		args = append(args, *user.User.DepartmentId)
+		args = append(args, *user.DepartmentId)
 		argId++
 	}
 	if user.PasswordHash != nil {
@@ -311,7 +293,7 @@ func (U *UserDB) PathUser(ctx context.Context, user *core.UserDB) error {
 					id = $%d
 `, setQuery, argId)
 
-	args = append(args, *user.User.Id)
+	args = append(args, user.User.Id)
 
 	cmdTag, err := db.Exec(ctx, query, args...)
 
