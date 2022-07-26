@@ -19,6 +19,9 @@ type auth interface {
 //go:generate mockgen -source=handler.go -destination=mock/authMock.go
 type company interface {
 	AddCompany(companyAdd *core.CompanyBase, user *core.User) (*core.Company, error)
+	GetCompany(companyId int) (*core.Company, error)
+	UpdateCompany(companyBase core.CompanyBase, companyId int) (*core.Company, error)
+	DeleteCompany(companyId int) error
 }
 
 //go:generate mockgen -source=handler.go -destination=mock/authMock.go
@@ -67,6 +70,9 @@ func (H *Handler) InitRoutes() *gin.Engine {
 		company := apiPrivate.Group("/company")
 		{
 			company.POST("", H.addCompany)
+			company.GET("/:company_id", H.getCompany)
+			company.PATCH("/:company_id", H.patchCompany)
+			company.DELETE("/:company_id", H.deleteCompany)
 		}
 	}
 	return router
