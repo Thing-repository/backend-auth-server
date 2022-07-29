@@ -40,19 +40,21 @@ func (H *Handler) getThing(c *gin.Context) {
 	newErrorResponse(c, http.StatusInternalServerError, "method not implemented")
 }
 
-// @Summary NOT IMPLEMENTED! Thing
+// @Summary NOT IMPLEMENTED! All things
 // @Security ApiKeyAuth
 // @Tags thing
-// @Description This request for getting all company thing
-// @ID getAllThing
+// @Description This request for getting all company or department things
+// @ID getAllThings
 // @Accept json
 // @Produces json
+// @Param companyId query int false "company id"
+// @Param departmentId query int false "department id"
 // @Success 200 {array} core.Thing
 // @Failure 400,401,403 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Failure default {object} errorResponse
-// @Router /thing [get]
-func (H *Handler) getAllThing(c *gin.Context) {
+// @Router /things [get]
+func (H *Handler) getAllThings(c *gin.Context) {
 	newErrorResponse(c, http.StatusInternalServerError, "method not implemented")
 }
 

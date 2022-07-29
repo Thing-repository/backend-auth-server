@@ -8,25 +8,8 @@ import (
 // @Summary NOT IMPLEMENTED! Thing usage
 // @Security ApiKeyAuth
 // @Tags thing usage
-// @Description This request for get all usage info in company
-// @ID getAllCompanyThingUsage
-// @Accept json
-// @Produces json
-// @Param companyId query int false "company id"
-// @Success 200 {array} core.ThingUsage
-// @Failure 400,401,403 {object} errorResponse
-// @Failure 500 {object} errorResponse
-// @Failure default {object} errorResponse
-// @Router /thing/usage/company [get]
-func (H *Handler) getAllCompanyThingUsage(c *gin.Context) {
-	newErrorResponse(c, http.StatusInternalServerError, "method not implemented")
-}
-
-// @Summary NOT IMPLEMENTED! Thing usage
-// @Security ApiKeyAuth
-// @Tags thing usage
-// @Description This request for get all usage info in department
-// @ID getAllDepartmentThingUsage
+// @Description This request for get all usage info in company or department
+// @ID getAllThingUsage
 // @Accept json
 // @Produces json
 // @Param companyId query int false "company id"
@@ -35,8 +18,8 @@ func (H *Handler) getAllCompanyThingUsage(c *gin.Context) {
 // @Failure 400,401,403 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Failure default {object} errorResponse
-// @Router /thing/usage/department [get]
-func (H *Handler) getAllDepartmentThingUsage(c *gin.Context) {
+// @Router /thing/usage [get]
+func (H *Handler) getAllThingUsage(c *gin.Context) {
 	newErrorResponse(c, http.StatusInternalServerError, "method not implemented")
 }
 

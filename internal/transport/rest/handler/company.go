@@ -380,6 +380,7 @@ func (H *Handler) deleteCompany(c *gin.Context) {
 // @ID loadCompanyImage
 // @Accept json
 // @Produces json
+// @Param id path int true "company id"
 // @Param input body []byte true "image file"
 // @Success 200 {string} string "image_url"
 // @Failure 400,401 {object} errorResponse
