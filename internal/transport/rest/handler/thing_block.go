@@ -8,25 +8,8 @@ import (
 // @Summary NOT IMPLEMENTED! Thing block
 // @Security ApiKeyAuth
 // @Tags thing block
-// @Description This request for get all block info in company
-// @ID getAllCompanyThingBlocking
-// @Accept json
-// @Produces json
-// @Param companyId query int false "company id"
-// @Success 200 {array} core.ThingBlock
-// @Failure 400,401,403 {object} errorResponse
-// @Failure 500 {object} errorResponse
-// @Failure default {object} errorResponse
-// @Router /thing/block/company [get]
-func (H *Handler) getAllCompanyThingBlocking(c *gin.Context) {
-	newErrorResponse(c, http.StatusInternalServerError, "method not implemented")
-}
-
-// @Summary NOT IMPLEMENTED! Thing block
-// @Security ApiKeyAuth
-// @Tags thing block
-// @Description This request for get all block info in department
-// @ID getAllDepartmentThingBlocking
+// @Description This request for get all block info in company or department
+// @ID getAllThingBlocking
 // @Accept json
 // @Produces json
 // @Param companyId query int false "company id"
@@ -35,8 +18,8 @@ func (H *Handler) getAllCompanyThingBlocking(c *gin.Context) {
 // @Failure 400,401,403 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Failure default {object} errorResponse
-// @Router /thing/block/department [get]
-func (H *Handler) getAllDepartmentThingBlocking(c *gin.Context) {
+// @Router /thing/block/ [get]
+func (H *Handler) getAllThingBlocking(c *gin.Context) {
 	newErrorResponse(c, http.StatusInternalServerError, "method not implemented")
 }
 
@@ -47,7 +30,6 @@ func (H *Handler) getAllDepartmentThingBlocking(c *gin.Context) {
 // @ID addThingBlock
 // @Accept json
 // @Produces json
-// @Param id query int true "thing id"
 // @Param input body core.ThingBlockAdd true "thing bock info"
 // @Success 200 {object} core.ThingBlock
 // @Failure 400,401,403 {object} errorResponse
