@@ -36,26 +36,16 @@ CREATE TABLE vacations
     vacation_time_end   timestamp
 );
 
-CREATE TABLE companies_admins
+
+CREATE TYPE credential_types as enum ('company_admin', 'department_admin', 'department_maintainer');
+CREATE TABLE credentials
 (
-    id         serial primary key,
-    user_id    int references users (id) on delete cascade     not null,
-    company_id int references companies (id) on delete cascade not null
+    id        serial primary key,
+    type      credential_types                                not null,
+    user_id   int references users (id) on delete cascade     not null,
+    object_id int references companies (id) on delete cascade not null
 );
 
-CREATE TABLE departments_admins
-(
-    id            serial primary key,
-    user_id       int references users (id) on delete cascade       not null,
-    department_id int references departments (id) on delete cascade not null
-);
-
-CREATE TABLE department_maintainers
-(
-    id            serial primary key,
-    user_id       int references users (id) on delete cascade       not null,
-    department_id int references departments (id) on delete cascade not null
-);
 
 CREATE TYPE thing_types as enum ('equipment', 'consumables');
 CREATE TYPE remainder_types as enum ('pcs', 'capacity', 'percents');
