@@ -26,7 +26,7 @@ type company interface {
 
 //go:generate mockgen -source=handler.go -destination=mock/authMock.go
 type token interface {
-	ValidateToken(token string) (int, error)
+	ValidateToken(token string) (int, []core.Credentials, error)
 }
 
 //go:generate mockgen -source=auth.go -destination=mock/authMock.go

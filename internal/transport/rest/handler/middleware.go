@@ -10,6 +10,7 @@ import (
 const (
 	authorizationHeader = "Authorization"
 	userCtx             = "userId"
+	credentialsCtx      = "credentials"
 )
 
 func (H *Handler) userIdentity(c *gin.Context) {
@@ -31,9 +32,10 @@ func (H *Handler) userIdentity(c *gin.Context) {
 		return
 	}
 
-	userId, err := H.token.ValidateToken(headerParts[1])
+	userId, credentials, err := H.token.ValidateToken(headerParts[1])
 	if err != nil {
 		newErrorResponse(c, http.StatusUnauthorized, err.Error())
 	}
 	c.Set(userCtx, userId)
+	c.Set(credentialsCtx, credentials)
 }

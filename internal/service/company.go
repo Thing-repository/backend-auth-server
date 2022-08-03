@@ -13,23 +13,22 @@ type userDBTransaction interface {
 	PathUser(ctx context.Context, user *core.UserDB) error
 }
 
-type companyDBTransaction interface {
+type companyDBCompany interface {
 	AddCompany(ctx context.Context, companyBase *core.CompanyBase) (*core.Company, error)
 	GetCompany(ctx context.Context, companyId int) (*core.Company, error)
 	UpdateCompany(ctx context.Context, company core.Company) error
 	DeleteCompany(ctx context.Context, companyId int) error
 }
 
-type departmentDBTransaction interface {
+type departmentDBCompany interface {
 	AddDepartment(ctx context.Context, departmentBase *core.DepartmentBase) (*core.Department, error)
 }
 
-type rightsDBTransaction interface {
-	AddCompanyAdmin(ctx context.Context, userId int, companyId int) (*core.CompanyManager, error)
-	AddDepartmentAdmin(ctx context.Context, userId int, departmentId int) (*core.DepartmentManager, error)
+type credentialsDBCompany interface {
+	CreateCredential(ctx context.Context, credentials core.Credentials) (int, error)
 }
 
-type transactionDBTransaction interface {
+type transactionDBCompany interface {
 	InjectTx(ctx context.Context) (context.Context, error)
 	CommitTx(ctx context.Context) error
 	RollbackTx(ctx context.Context) error
@@ -38,17 +37,17 @@ type transactionDBTransaction interface {
 
 type Company struct {
 	userDB        userDBTransaction
-	companyDB     companyDBTransaction
-	departmentDB  departmentDBTransaction
-	rightsDB      rightsDBTransaction
-	transactionDB transactionDBTransaction
+	companyDB     companyDBCompany
+	departmentDB  departmentDBCompany
+	credentialsDB credentialsDBCompany
+	transactionDB transactionDBCompany
 }
 
-func NewCompany(userDB userDBTransaction, companyDB companyDBTransaction,
-	departmentDB departmentDBTransaction, rightsDB rightsDBTransaction,
-	transactionDB transactionDBTransaction) *Company {
+func NewCompany(userDB userDBTransaction, companyDB companyDBCompany,
+	departmentDB departmentDBCompany, credentialsDB credentialsDBCompany,
+	transactionDB transactionDBCompany) *Company {
 	return &Company{userDB: userDB, companyDB: companyDB,
-		departmentDB: departmentDB, rightsDB: rightsDB,
+		departmentDB: departmentDB, credentialsDB: credentialsDB,
 		transactionDB: transactionDB}
 }
 
@@ -96,7 +95,13 @@ func (C *Company) AddCompany(companyAdd *core.CompanyBase, user *core.User) (*co
 		return nil, err
 	}
 
-	_, err = C.rightsDB.AddCompanyAdmin(ctx, user.Id, companyData.Id)
+	companyAdmin := core.Credentials{
+		CredentialType: core.CredentialTypeCompanyAdmin,
+		UserId:         user.Id,
+		ObjectId:       companyData.Id,
+	}
+
+	_, err = C.credentialsDB.CreateCredential(ctx, companyAdmin)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":      logBase,
@@ -104,17 +109,6 @@ func (C *Company) AddCompany(companyAdd *core.CompanyBase, user *core.User) (*co
 			"companyId": companyData.Id,
 			"error":     err.Error(),
 		}).Error("error add company admin to database")
-		return nil, err
-	}
-
-	_, err = C.rightsDB.AddDepartmentAdmin(ctx, user.Id, departmentData.Id)
-	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"base":      logBase,
-			"userId":    user.Id,
-			"companyId": departmentData.Id,
-			"error":     err.Error(),
-		}).Error("error add department admin to database")
 		return nil, err
 	}
 
