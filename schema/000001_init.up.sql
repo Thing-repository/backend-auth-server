@@ -37,13 +37,21 @@ CREATE TABLE vacations
 );
 
 
-CREATE TYPE credential_types as enum ('company_admin', 'department_admin', 'department_maintainer');
-CREATE TABLE credentials
+CREATE TYPE credential_types as enum ('company_admin', 'company_user','department_admin', 'department_maintainer', 'department_user');
+CREATE TABLE company_credentials
 (
-    id        serial primary key,
-    type      credential_types                                not null,
-    user_id   int references users (id) on delete cascade     not null,
-    object_id int references companies (id) on delete cascade not null
+    id              serial primary key,
+    credential_type credential_types                        not null,
+    user_id         int references users (id) on delete cascade     not null,
+    object_id       int references companies (id) on delete cascade not null
+);
+
+CREATE TABLE department_credentials
+(
+    id              serial primary key,
+    credential_type credential_types                          not null,
+    user_id         int references users (id) on delete cascade       not null,
+    object_id       int references departments (id) on delete cascade not null
 );
 
 
