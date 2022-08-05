@@ -18,10 +18,10 @@ type auth interface {
 
 //go:generate mockgen -source=handler.go -destination=mock/authMock.go
 type company interface {
-	AddCompany(companyAdd *core.CompanyBase, user *core.User) (*core.Company, error)
-	GetCompany(companyId int) (*core.Company, error)
-	UpdateCompany(companyBase core.CompanyBase, companyId int) (*core.Company, error)
-	DeleteCompany(companyId int) error
+	AddCompany(ctx context.Context, companyAdd *core.CompanyBase) (*core.Company, error)
+	GetCompany(ctx context.Context, companyId int) (*core.Company, error)
+	UpdateCompany(ctx context.Context, companyBase core.CompanyBase, companyId int) (*core.Company, error)
+	DeleteCompany(ctx context.Context, companyId int) error
 }
 
 //go:generate mockgen -source=handler.go -destination=mock/authMock.go
