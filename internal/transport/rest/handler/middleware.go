@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/Thing-repository/backend-server/pkg/core"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"
@@ -9,8 +10,6 @@ import (
 
 const (
 	authorizationHeader = "Authorization"
-	userCtx             = "userId"
-	credentialsCtx      = "credentials"
 )
 
 func (H *Handler) userIdentity(c *gin.Context) {
@@ -36,6 +35,6 @@ func (H *Handler) userIdentity(c *gin.Context) {
 	if err != nil {
 		newErrorResponse(c, http.StatusUnauthorized, err.Error())
 	}
-	c.Set(userCtx, userId)
-	c.Set(credentialsCtx, credentials)
+	c.Set(core.UserIdCtx, userId)
+	c.Set(core.CredentialsCtx, credentials)
 }
