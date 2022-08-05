@@ -77,15 +77,3 @@ func (H *Handler) InitRoutes() *gin.Engine {
 	}
 	return router
 }
-
-func getUserId(c *gin.Context) (int, error) {
-	userId, ok := c.Get(userCtx)
-	if !ok {
-		return 0, errors.New("can't get user id")
-	}
-	id, ok := userId.(int)
-	if !ok {
-		return 0, errors.New("can't get user id")
-	}
-	return id, nil
-}
