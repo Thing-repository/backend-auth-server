@@ -2,15 +2,14 @@ package handler
 
 import (
 	"context"
-	"errors"
 	_ "github.com/Thing-repository/backend-server/docs"
 	"github.com/Thing-repository/backend-server/pkg/core"
 	"github.com/gin-gonic/gin"
+	"github.com/swaggo/files"
 	"github.com/swaggo/gin-swagger"
-	"github.com/swaggo/gin-swagger/swaggerFiles"
 )
 
-//go:generate mockgen -source=handler.go -destination=mocks/authMock.go
+//go:generate mockgen -source=handler.go -destinations=mocks/authMock.go
 type auth interface {
 	SignIn(authData *core.UserSignInData) (*core.SignInResponse, error)
 	SignUp(authData *core.UserSignUpData) (*core.SignInResponse, error)
