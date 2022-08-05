@@ -2,10 +2,13 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 	"github.com/Thing-repository/backend-server/pkg/core"
+	"github.com/Thing-repository/backend-server/pkg/core/moduleErrors"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/exp/slices"
 )
 
 type dbDriverRightsDB interface {
@@ -27,10 +30,25 @@ func NewCredentialsDB(dbDriver dbDriverRightsDB, transactionDB transactionDBRigh
 }
 
 func (R *RightsDB) CreateCredential(ctx context.Context,
-	credentials core.Credentials) (int, error) {
+	credentials *core.AddCredentials) (int, error) {
 	logBase := logrus.Fields{
 		"module":   "postgres",
 		"function": "CreateCredential",
+	}
+
+	var table string
+
+	if slices.Index(core.CompanyCredential, credentials.CredentialType) != -1 {
+		table = "company_credentials"
+	} else if slices.Index(core.DepartmentCredential, credentials.CredentialType) != -1 {
+		table = "department_credentials"
+	} else {
+		logrus.WithFields(logrus.Fields{
+			"base":           logBase,
+			"credentials":    credentials,
+			"CredentialType": credentials.CredentialType,
+		}).Error("error add credential to postgres")
+		return 0, moduleErrors.ErrorDataBaseInvalidCredentialsType
 	}
 
 	db := R.dbDriver
@@ -40,12 +58,14 @@ func (R *RightsDB) CreateCredential(ctx context.Context,
 	}
 
 	query := `
-			INSERT INTO credentials	
-				(type, user_id, object_id)
+			INSERT INTO %s
+				(credential_type, user_id, object_id)
 			VALUES 
 				($1, $2, $3)
 			RETURNING 
 				id`
+
+	query = fmt.Sprintf(query, table)
 
 	row := db.QueryRow(ctx, query, credentials.CredentialType, credentials.UserId, credentials.ObjectId)
 
@@ -81,11 +101,11 @@ func (R *RightsDB) CreateCredential(ctx context.Context,
 
 }
 
-func (R *RightsDB) GetUserCredential(ctx context.Context,
-	userId int) ([]core.Credentials, error) {
+func (R *RightsDB) getCredentials(ctx context.Context,
+	userId int, table string) ([]core.Credentials, error) {
 	logBase := logrus.Fields{
 		"module":   "postgres",
-		"function": "GetUserCredential",
+		"function": "getCredentials",
 	}
 
 	db := R.dbDriver
@@ -95,13 +115,15 @@ func (R *RightsDB) GetUserCredential(ctx context.Context,
 	}
 
 	query := `
-			SELECT
-				type,
-				object_id
+			SELECT 
+				credential_type, 
+				object_id 
 			FROM 
-				credentials 
+				%s 
 			WHERE 
 				user_id = $1`
+
+	query = fmt.Sprintf(query, table)
 
 	rows, err := db.Query(ctx, query, userId)
 	if err != nil {
@@ -111,6 +133,7 @@ func (R *RightsDB) GetUserCredential(ctx context.Context,
 				logrus.WithFields(logrus.Fields{
 					"base":    logBase,
 					"userId":  userId,
+					"table":   table,
 					"massage": pgErr.Message,
 					"where":   pgErr.Where,
 					"detail":  pgErr.Detail,
@@ -123,6 +146,7 @@ func (R *RightsDB) GetUserCredential(ctx context.Context,
 			logrus.WithFields(logrus.Fields{
 				"base":   logBase,
 				"userId": userId,
+				"table":  table,
 				"query":  logQuery(query),
 				"error":  err,
 			}).Error("error getting user credentials from postgres")
@@ -134,8 +158,7 @@ func (R *RightsDB) GetUserCredential(ctx context.Context,
 
 	for rows.Next() {
 		var credential core.Credentials
-		credential.UserId = userId
-		err = rows.Scan(credential.CredentialType, credential.ObjectId)
+		err = rows.Scan(&credential.CredentialType, &credential.ObjectId)
 		if err != nil {
 			if pgErr, ok := err.(*pgconn.PgError); ok {
 				switch pgErr.Code {
@@ -163,6 +186,35 @@ func (R *RightsDB) GetUserCredential(ctx context.Context,
 		}
 		ret = append(ret, credential)
 	}
-
 	return ret, nil
+}
+
+func (R *RightsDB) GetUserCredential(ctx context.Context,
+	userId int) ([]core.Credentials, error) {
+	logBase := logrus.Fields{
+		"module":   "postgres",
+		"function": "getCredentials",
+	}
+
+	companyCredentials, err := R.getCredentials(ctx, userId, "company_credentials")
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"base":   logBase,
+			"userId": userId,
+			"error":  err,
+		}).Error("error getting user credentials from company_credentials postgres")
+		return nil, err
+	}
+
+	departmentCredentials, err := R.getCredentials(ctx, userId, "department_credentials")
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"base":   logBase,
+			"userId": userId,
+			"error":  err,
+		}).Error("error getting user credentials from department_credentials postgres")
+		return nil, err
+	}
+
+	return append(companyCredentials, departmentCredentials...), nil
 }
