@@ -5,8 +5,12 @@ type CompanyBase struct {
 	Address     *string `json:"address,omitempty"`
 }
 
-type Company struct {
+type CompanyUpdate struct {
 	CompanyBase
 	ImageURL *string `json:"image_url,omitempty"`
-	Id       int     `json:"id"`
+}
+
+type Company struct {
+	CompanyUpdate
+	Id int `json:"id"`
 }
