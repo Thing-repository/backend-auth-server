@@ -13,7 +13,7 @@ import (
 // @Accept json
 // @Produces json
 // @Param companyId path int true "company id"
-// @Success 200 {array} core.CompanyManager "list of company admins"
+// @Success 200 {array} core.User "list of company admins"
 // @Failure 400,401,403 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Failure default {object} errorResponse
@@ -66,7 +66,7 @@ func (H *Handler) deleteCompanyAdmin(c *gin.Context) {
 // @Accept json
 // @Produces json
 // @Param departmentId path int true "department id"
-// @Success 200 {array} core.DepartmentManager "list of department admins"
+// @Success 200 {array} core.User "list of department admins"
 // @Failure 400,401,403 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Failure default {object} errorResponse
@@ -119,7 +119,7 @@ func (H *Handler) deleteDepartmentAdmin(c *gin.Context) {
 // @Accept json
 // @Produces json
 // @Param departmentId path int true "department id"
-// @Success 200 {array} core.DepartmentManager "list of department maintainer"
+// @Success 200 {array} core.User "list of department maintainer"
 // @Failure 400,401,403 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Failure default {object} errorResponse
