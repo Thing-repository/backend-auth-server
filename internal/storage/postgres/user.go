@@ -216,7 +216,7 @@ func (U *UserDB) AddUser(ctx context.Context, user *core.AddUserDB) (*core.UserD
 	return &ret, nil
 }
 
-func (U *UserDB) PathUser(ctx context.Context, user *core.UserDB) error {
+func (U *UserDB) PathUser(ctx context.Context, user *core.UserDB, userId int) error {
 	logBase := logrus.Fields{
 		"module":   "postgres",
 		"file":     "user.go",
@@ -293,7 +293,7 @@ func (U *UserDB) PathUser(ctx context.Context, user *core.UserDB) error {
 					id = $%d
 `, setQuery, argId)
 
-	args = append(args, user.User.Id)
+	args = append(args, userId)
 
 	cmdTag, err := db.Exec(ctx, query, args...)
 

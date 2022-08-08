@@ -11,7 +11,7 @@ const departmentHeadName = "Head"
 
 //go:generate mockgen -source=auth.go -destination=mock/authMock.go
 type userDBCompany interface {
-	PathUser(ctx context.Context, user *core.UserDB) error
+	PathUser(ctx context.Context, user *core.UserDB, userId int) error
 	GetUser(ctx context.Context, userId int) (*core.UserDB, error)
 }
 
@@ -174,7 +174,7 @@ func (C *Company) AddCompany(ctx context.Context, companyAdd *core.CompanyBase) 
 		},
 	}
 
-	err = C.userDB.PathUser(ctx, newUserDb)
+	err = C.userDB.PathUser(ctx, newUserDb, userId)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":      logBase,
