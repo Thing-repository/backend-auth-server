@@ -159,6 +159,16 @@ func (H *Handler) patchCompany(c *gin.Context) {
 		return
 	}
 
+	if !(company.CompanyName != nil || company.Address != nil) {
+		logrus.WithFields(logrus.Fields{
+			"base":    logBase,
+			"company": company,
+			"error":   err.Error(),
+		}).Error("nothing to change")
+		newErrorResponse(c, http.StatusBadRequest, moduleErrors.ErrorAllNoFields.Error())
+		return
+	}
+
 	companyData, err := H.company.UpdateCompany(c, company, companyId)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{

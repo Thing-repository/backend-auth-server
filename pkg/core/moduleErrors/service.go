@@ -10,4 +10,5 @@ var (
 	ErrorServiceUserAlreadyHasCompany = errors.New("user already has company")
 	ErrorServiceBadPermissions        = errors.New("access denied")
 	ErrorServiceInvalidContext        = errors.New("invalid context")
+	ErrorAllNoFields                  = errors.New("nothing to change")
 )
