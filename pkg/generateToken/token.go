@@ -1,6 +1,7 @@
 package generateToken
 
 import (
+	"github.com/Thing-repository/backend-server/pkg/core"
 	"github.com/Thing-repository/backend-server/pkg/core/moduleErrors"
 	"github.com/golang-jwt/jwt"
 	"github.com/sirupsen/logrus"
@@ -13,7 +14,8 @@ const (
 
 type tokenClaims struct {
 	jwt.StandardClaims
-	UserId int `json:"user_id"`
+	UserId      int                `json:"user_id"`
+	Credentials []core.Credentials `json:"credentials"`
 }
 
 type token struct {
@@ -24,7 +26,7 @@ func NewToken(signingKey []byte) *token {
 	return &token{signingKey: signingKey}
 }
 
-func (t *token) GenerateToken(userId int) (string, error) {
+func (t *token) GenerateToken(userId int, credentials []core.Credentials) (string, error) {
 	logBase := logrus.Fields{
 		"module":   "generateToken",
 		"function": "GenerateToken",
@@ -35,7 +37,8 @@ func (t *token) GenerateToken(userId int) (string, error) {
 			ExpiresAt: time.Now().Add(tokenTTL).Unix(),
 			IssuedAt:  time.Now().Unix(),
 		},
-		UserId: userId,
+		UserId:      userId,
+		Credentials: credentials,
 	})
 
 	signetToken, err := token.SignedString(t.signingKey)
@@ -51,7 +54,7 @@ func (t *token) GenerateToken(userId int) (string, error) {
 	return signetToken, nil
 }
 
-func (t *token) ValidateToken(token string) (int, error) {
+func (t *token) ValidateToken(token string) (int, []core.Credentials, error) {
 	logBase := logrus.Fields{
 		"module":   "generateToken",
 		"function": "ValidateToken",
@@ -69,7 +72,7 @@ func (t *token) ValidateToken(token string) (int, error) {
 			"token": token,
 			"error": err,
 		}).Warning("error validation token")
-		return 0, err
+		return 0, nil, err
 	}
 
 	claims, ok := res.Claims.(*tokenClaims)
@@ -79,7 +82,7 @@ func (t *token) ValidateToken(token string) (int, error) {
 			"token":  token,
 			"claims": claims,
 		}).Warning("error validation token")
-		return 0, moduleErrors.ErrorTokenInvalidToken
+		return 0, nil, moduleErrors.ErrorTokenInvalidToken
 	}
 
 	// validate date
@@ -89,8 +92,8 @@ func (t *token) ValidateToken(token string) (int, error) {
 			"token":  token,
 			"claims": claims,
 		}).Warning("error token expired")
-		return 0, moduleErrors.ErrorTokenExpiredToken
+		return 0, nil, moduleErrors.ErrorTokenExpiredToken
 	}
 
-	return claims.UserId, nil
+	return claims.UserId, claims.Credentials, nil
 }

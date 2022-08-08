@@ -3,33 +3,34 @@ package service
 import (
 	"context"
 	"github.com/Thing-repository/backend-server/pkg/core"
+	"github.com/Thing-repository/backend-server/pkg/core/moduleErrors"
 	"github.com/sirupsen/logrus"
 )
 
 const departmentHeadName = "Head"
 
 //go:generate mockgen -source=auth.go -destination=mock/authMock.go
-type userDBTransaction interface {
+type userDBCompany interface {
 	PathUser(ctx context.Context, user *core.UserDB) error
+	GetUser(ctx context.Context, userId int) (*core.UserDB, error)
 }
 
-type companyDBTransaction interface {
+type companyDBCompany interface {
 	AddCompany(ctx context.Context, companyBase *core.CompanyBase) (*core.Company, error)
 	GetCompany(ctx context.Context, companyId int) (*core.Company, error)
-	UpdateCompany(ctx context.Context, company core.Company) error
+	UpdateCompany(ctx context.Context, company core.CompanyUpdate, companyId int) error
 	DeleteCompany(ctx context.Context, companyId int) error
 }
 
-type departmentDBTransaction interface {
+type departmentDBCompany interface {
 	AddDepartment(ctx context.Context, departmentBase *core.DepartmentBase) (*core.Department, error)
 }
 
-type rightsDBTransaction interface {
-	AddCompanyAdmin(ctx context.Context, userId int, companyId int) (*core.CompanyManager, error)
-	AddDepartmentAdmin(ctx context.Context, userId int, departmentId int) (*core.DepartmentManager, error)
+type credentialsDBCompany interface {
+	CreateCredential(ctx context.Context, credentials *core.AddCredentials) (int, error)
 }
 
-type transactionDBTransaction interface {
+type transactionDBCompany interface {
 	InjectTx(ctx context.Context) (context.Context, error)
 	CommitTx(ctx context.Context) error
 	RollbackTx(ctx context.Context) error
@@ -37,30 +38,38 @@ type transactionDBTransaction interface {
 }
 
 type Company struct {
-	userDB        userDBTransaction
-	companyDB     companyDBTransaction
-	departmentDB  departmentDBTransaction
-	rightsDB      rightsDBTransaction
-	transactionDB transactionDBTransaction
+	userDB        userDBCompany
+	companyDB     companyDBCompany
+	departmentDB  departmentDBCompany
+	credentialsDB credentialsDBCompany
+	transactionDB transactionDBCompany
 }
 
-func NewCompany(userDB userDBTransaction, companyDB companyDBTransaction,
-	departmentDB departmentDBTransaction, rightsDB rightsDBTransaction,
-	transactionDB transactionDBTransaction) *Company {
+func NewCompany(userDB userDBCompany, companyDB companyDBCompany,
+	departmentDB departmentDBCompany, credentialsDB credentialsDBCompany,
+	transactionDB transactionDBCompany) *Company {
 	return &Company{userDB: userDB, companyDB: companyDB,
-		departmentDB: departmentDB, rightsDB: rightsDB,
+		departmentDB: departmentDB, credentialsDB: credentialsDB,
 		transactionDB: transactionDB}
 }
 
-func (C *Company) AddCompany(companyAdd *core.CompanyBase, user *core.User) (*core.Company, error) {
+func (C *Company) AddCompany(ctx context.Context, companyAdd *core.CompanyBase) (*core.Company, error) {
 	logBase := logrus.Fields{
 		"module":   "service",
 		"function": "AddCompany",
+		"context":  *core.LogContext(ctx),
 	}
 
-	ctx := context.TODO()
+	userId, err := core.ContextGetUserId(ctx)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"base":  logBase,
+			"error": err.Error(),
+		}).Error("error get user id from context")
+		return nil, moduleErrors.ErrorServiceInvalidContext
+	}
 
-	ctx, err := C.transactionDB.InjectTx(ctx)
+	ctx, err = C.transactionDB.InjectTx(ctx)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":  logBase,
@@ -70,6 +79,24 @@ func (C *Company) AddCompany(companyAdd *core.CompanyBase, user *core.User) (*co
 	}
 
 	defer C.transactionDB.RollbackTxDefer(ctx)
+
+	userData, err := C.userDB.GetUser(ctx, userId)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"base":  logBase,
+			"error": err.Error(),
+		}).Error("error get user data")
+		return nil, moduleErrors.ErrorServiceGetUserData
+	}
+
+	if userData.CompanyId != nil {
+		logrus.WithFields(logrus.Fields{
+			"base":  logBase,
+			"error": userData,
+		}).Error(moduleErrors.ErrorServiceUserAlreadyHasCompany.Error())
+
+		return nil, moduleErrors.ErrorServiceUserAlreadyHasCompany
+	}
 
 	companyData, err := C.companyDB.AddCompany(ctx, companyAdd)
 	if err != nil {
@@ -96,23 +123,45 @@ func (C *Company) AddCompany(companyAdd *core.CompanyBase, user *core.User) (*co
 		return nil, err
 	}
 
-	_, err = C.rightsDB.AddCompanyAdmin(ctx, user.Id, companyData.Id)
+	_, err = C.credentialsDB.CreateCredential(ctx, newCredential(companyData.Id, userId, core.CredentialTypeCompanyAdmin))
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":      logBase,
-			"userId":    user.Id,
 			"companyId": companyData.Id,
+			"userId":    userId,
 			"error":     err.Error(),
 		}).Error("error add company admin to database")
 		return nil, err
 	}
 
-	_, err = C.rightsDB.AddDepartmentAdmin(ctx, user.Id, departmentData.Id)
+	_, err = C.credentialsDB.CreateCredential(ctx, newCredential(companyData.Id, userId, core.CredentialTypeCompanyUser))
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":      logBase,
-			"userId":    user.Id,
-			"companyId": departmentData.Id,
+			"companyId": companyData.Id,
+			"userId":    userId,
+			"error":     err.Error(),
+		}).Error("error add company user to database")
+		return nil, err
+	}
+
+	_, err = C.credentialsDB.CreateCredential(ctx, newCredential(departmentData.Id, userId, core.CredentialTypeDepartmentAdmin))
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"base":      logBase,
+			"companyId": companyData.Id,
+			"userId":    userId,
+			"error":     err.Error(),
+		}).Error("error add department admin to database")
+		return nil, err
+	}
+
+	_, err = C.credentialsDB.CreateCredential(ctx, newCredential(departmentData.Id, userId, core.CredentialTypeDepartmentUser))
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"base":      logBase,
+			"companyId": companyData.Id,
+			"userId":    userId,
 			"error":     err.Error(),
 		}).Error("error add department admin to database")
 		return nil, err
@@ -120,7 +169,6 @@ func (C *Company) AddCompany(companyAdd *core.CompanyBase, user *core.User) (*co
 
 	newUserDb := &core.UserDB{
 		User: core.User{
-			Id:           user.Id,
 			CompanyId:    &companyData.Id,
 			DepartmentId: &departmentData.Id,
 		},
@@ -147,13 +195,30 @@ func (C *Company) AddCompany(companyAdd *core.CompanyBase, user *core.User) (*co
 	return companyData, nil
 }
 
-func (C *Company) GetCompany(companyId int) (*core.Company, error) {
+func (C *Company) GetCompany(ctx context.Context, companyId int) (*core.Company, error) {
 	logBase := logrus.Fields{
 		"module":   "service",
 		"function": "GetCompany",
+		"context":  *core.LogContext(ctx),
 	}
 
-	ctx := context.TODO()
+	credentials, err := core.ContextGetUserCredentials(ctx)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"base":  logBase,
+			"error": err.Error(),
+		}).Error("error get user credentials from context")
+		return nil, moduleErrors.ErrorServiceInvalidContext
+	}
+
+	// TODO: add check rights for service admin, load and check permission form context
+	if !core.CheckCredential(credentials, core.CredentialTypeCompanyUser, companyId) {
+		logrus.WithFields(logrus.Fields{
+			"base":      logBase,
+			"companyId": companyId,
+		}).Error("user has not credentials")
+		return nil, moduleErrors.ErrorServiceBadPermissions
+	}
 
 	companyData, err := C.companyDB.GetCompany(ctx, companyId)
 	if err != nil {
@@ -161,27 +226,42 @@ func (C *Company) GetCompany(companyId int) (*core.Company, error) {
 			"base":      logBase,
 			"companyId": companyId,
 			"error":     err.Error(),
-		}).Error("error add company to database")
+		}).Error("error get company from database")
 		return nil, err
 	}
 
 	return companyData, nil
 }
 
-func (C *Company) UpdateCompany(companyBase core.CompanyBase, companyId int) (*core.Company, error) {
+func (C *Company) UpdateCompany(ctx context.Context, companyBase core.CompanyBase, companyId int) (*core.Company, error) {
 	logBase := logrus.Fields{
 		"module":   "service",
 		"function": "UpdateCompany",
+		"context":  *core.LogContext(ctx),
 	}
 
-	ctx := context.TODO()
+	credentials, err := core.ContextGetUserCredentials(ctx)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"base":  logBase,
+			"error": err.Error(),
+		}).Error("error get user credentials from context")
+		return nil, moduleErrors.ErrorServiceInvalidContext
+	}
 
-	company := core.Company{
+	if !core.CheckCredential(credentials, core.CredentialTypeCompanyAdmin, companyId) {
+		logrus.WithFields(logrus.Fields{
+			"base":      logBase,
+			"companyId": companyId,
+		}).Error("user has not credentials")
+		return nil, moduleErrors.ErrorServiceBadPermissions
+	}
+
+	company := core.CompanyUpdate{
 		CompanyBase: companyBase,
-		Id:          companyId,
 	}
 
-	err := C.companyDB.UpdateCompany(ctx, company)
+	err = C.companyDB.UpdateCompany(ctx, company, companyId)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":        logBase,
@@ -192,18 +272,33 @@ func (C *Company) UpdateCompany(companyBase core.CompanyBase, companyId int) (*c
 		return nil, err
 	}
 
-	return &company, nil
+	return C.GetCompany(ctx, companyId)
 }
 
-func (C *Company) DeleteCompany(companyId int) error {
+func (C *Company) DeleteCompany(ctx context.Context, companyId int) error {
 	logBase := logrus.Fields{
 		"module":   "service",
 		"function": "UpdateCompany",
 	}
 
-	ctx := context.TODO()
+	credentials, err := core.ContextGetUserCredentials(ctx)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"base":  logBase,
+			"error": err.Error(),
+		}).Error("error get user credentials from context")
+		return moduleErrors.ErrorServiceInvalidContext
+	}
 
-	err := C.companyDB.DeleteCompany(ctx, companyId)
+	if !core.CheckCredential(credentials, core.CredentialTypeCompanyAdmin, companyId) {
+		logrus.WithFields(logrus.Fields{
+			"base":      logBase,
+			"companyId": companyId,
+		}).Error("user has not credentials")
+		return moduleErrors.ErrorServiceBadPermissions
+	}
+
+	err = C.companyDB.DeleteCompany(ctx, companyId)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":      logBase,

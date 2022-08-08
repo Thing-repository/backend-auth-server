@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"github.com/Thing-repository/backend-server/pkg/core"
 	"github.com/Thing-repository/backend-server/pkg/core/moduleErrors"
 	"github.com/gin-gonic/gin"
@@ -27,36 +26,7 @@ func (H *Handler) addCompany(c *gin.Context) {
 	logBase := logrus.Fields{
 		"module":   "handler",
 		"function": "addCompany",
-	}
-	userId, err := getUserId(c)
-	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"base":  logBase,
-			"error": err.Error(),
-		}).Error("error get user id")
-		newErrorResponse(c, http.StatusUnauthorized, err.Error())
-		return
-	}
-
-	ctx := context.TODO()
-
-	userData, err := H.userDB.GetUser(ctx, userId)
-	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"base":  logBase,
-			"error": err.Error(),
-		}).Error("error get user data")
-		newErrorResponse(c, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	if userData.CompanyId != nil {
-		logrus.WithFields(logrus.Fields{
-			"base":  logBase,
-			"error": userData,
-		}).Error(moduleErrors.ErrorHandlerUserAlreadyHasCompany.Error())
-		newErrorResponse(c, http.StatusConflict, moduleErrors.ErrorHandlerUserAlreadyHasCompany.Error())
-		return
+		"context":  *core.LogContext(c),
 	}
 
 	var company core.CompanyBase
@@ -70,12 +40,28 @@ func (H *Handler) addCompany(c *gin.Context) {
 		return
 	}
 
-	res, err := H.company.AddCompany(&company, &userData.User)
+	if company.CompanyName == nil || company.Address == nil {
+		logrus.WithFields(logrus.Fields{
+			"base":    logBase,
+			"company": company,
+		}).Error(moduleErrors.ErrorHandlerNoRequiredFieldsQuery.Error())
+		newErrorResponse(c, http.StatusBadRequest, moduleErrors.ErrorHandlerNoRequiredFieldsQuery.Error())
+	}
+
+	res, err := H.company.AddCompany(c, &company)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":  logBase,
 			"error": err.Error(),
 		}).Error("add company error")
+		switch err {
+		case moduleErrors.ErrorServiceUserAlreadyHasCompany:
+			newErrorResponse(c, http.StatusConflict, moduleErrors.ErrorServiceUserAlreadyHasCompany.Error())
+			return
+		case moduleErrors.ErrorServiceInvalidContext:
+			newErrorResponse(c, http.StatusUnauthorized, moduleErrors.ErrorHandlerForbidden.Error())
+			return
+		}
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -102,56 +88,32 @@ func (H *Handler) getCompany(c *gin.Context) {
 		"function": "getCompany",
 	}
 
-	userId, err := getUserId(c)
-	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"base":  logBase,
-			"error": err.Error(),
-		}).Error("error get user id")
-		newErrorResponse(c, http.StatusUnauthorized, err.Error())
-		return
-	}
-
-	ctx := context.TODO()
-
 	companyId, err := strconv.Atoi(c.Param("company_id"))
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":  logBase,
 			"error": err,
-		}).Error(moduleErrors.ErrorNoRequiredFieldsQuery.Error())
-		newErrorResponse(c, http.StatusBadRequest, moduleErrors.ErrorNoRequiredFieldsQuery.Error())
+		}).Error(moduleErrors.ErrorHandlerNoRequiredFieldsQuery.Error())
+		newErrorResponse(c, http.StatusBadRequest, moduleErrors.ErrorHandlerNoRequiredFieldsQuery.Error())
 	}
 
-	userData, err := H.userDB.GetUser(ctx, userId)
+	companyData, err := H.company.GetCompany(c, companyId)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":  logBase,
 			"error": err.Error(),
-		}).Error("error get user data")
+		}).Error("get company error")
+		switch err {
+		case moduleErrors.ErrorServiceInvalidContext:
+			newErrorResponse(c, http.StatusUnauthorized, moduleErrors.ErrorHandlerForbidden.Error())
+			return
+		case moduleErrors.ErrorServiceBadPermissions:
+			newErrorResponse(c, http.StatusForbidden, moduleErrors.ErrorServiceBadPermissions.Error())
+			return
+		}
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-
-	// TODO: add check rights for service admin
-	if userData.CompanyId == nil || *userData.CompanyId != companyId {
-		if userData.CompanyId == nil {
-			logrus.WithFields(logrus.Fields{
-				"base": logBase,
-			}).Error("user has not companyId")
-		} else {
-			logrus.WithFields(logrus.Fields{
-				"base":            logBase,
-				"userCompany":     *userData.CompanyId,
-				"requiredCompany": companyId,
-			}).Error("user has invalid companyId")
-		}
-
-		newErrorResponse(c, http.StatusForbidden, moduleErrors.ErrorForbidden.Error())
-		return
-	}
-
-	companyData, err := H.company.GetCompany(companyId)
 
 	c.AbortWithStatusJSON(http.StatusOK, companyData)
 }
@@ -174,74 +136,16 @@ func (H *Handler) patchCompany(c *gin.Context) {
 	logBase := logrus.Fields{
 		"module":   "handler",
 		"function": "patchCompany",
+		"context":  *core.LogContext(c),
 	}
-
-	userId, err := getUserId(c)
-	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"base":  logBase,
-			"error": err.Error(),
-		}).Error("error get user id")
-		newErrorResponse(c, http.StatusUnauthorized, err.Error())
-		return
-	}
-
-	ctx := context.TODO()
 
 	companyId, err := strconv.Atoi(c.Param("company_id"))
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":  logBase,
 			"error": err,
-		}).Error(moduleErrors.ErrorNoRequiredFieldsQuery.Error())
-		newErrorResponse(c, http.StatusBadRequest, moduleErrors.ErrorNoRequiredFieldsQuery.Error())
-	}
-
-	userData, err := H.userDB.GetUser(ctx, userId)
-	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"base":  logBase,
-			"error": err.Error(),
-		}).Error("error get user data")
-		newErrorResponse(c, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	// TODO: add check rights for service admin
-	if true {
-		if userData.CompanyId == nil || *userData.CompanyId != companyId {
-			if userData.CompanyId == nil {
-				logrus.WithFields(logrus.Fields{
-					"base": logBase,
-				}).Error("user has not companyId")
-			} else {
-				logrus.WithFields(logrus.Fields{
-					"base":            logBase,
-					"userCompany":     *userData.CompanyId,
-					"requiredCompany": companyId,
-				}).Error("user has invalid companyId")
-			}
-
-			newErrorResponse(c, http.StatusForbidden, moduleErrors.ErrorForbidden.Error())
-			return
-		}
-		// TODO: realise check permission
-		if userData.CompanyId == nil || *userData.CompanyId != companyId {
-			if userData.CompanyId == nil {
-				logrus.WithFields(logrus.Fields{
-					"base": logBase,
-				}).Error("user has not companyId")
-			} else {
-				logrus.WithFields(logrus.Fields{
-					"base":            logBase,
-					"userCompany":     *userData.CompanyId,
-					"requiredCompany": companyId,
-				}).Error("user has invalid companyId")
-			}
-
-			newErrorResponse(c, http.StatusForbidden, moduleErrors.ErrorForbidden.Error())
-			return
-		}
+		}).Error(moduleErrors.ErrorHandlerNoRequiredFieldsQuery.Error())
+		newErrorResponse(c, http.StatusBadRequest, moduleErrors.ErrorHandlerNoRequiredFieldsQuery.Error())
 	}
 
 	var company core.CompanyBase
@@ -255,8 +159,17 @@ func (H *Handler) patchCompany(c *gin.Context) {
 		return
 	}
 
-	companyData, err := H.company.UpdateCompany(company, companyId)
+	if !(company.CompanyName != nil || company.Address != nil) {
+		logrus.WithFields(logrus.Fields{
+			"base":    logBase,
+			"company": company,
+			"error":   err.Error(),
+		}).Error("nothing to change")
+		newErrorResponse(c, http.StatusBadRequest, moduleErrors.ErrorAllNoFields.Error())
+		return
+	}
 
+	companyData, err := H.company.UpdateCompany(c, company, companyId)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":      logBase,
@@ -264,6 +177,14 @@ func (H *Handler) patchCompany(c *gin.Context) {
 			"companyId": companyId,
 			"error":     err.Error(),
 		}).Error("update company error")
+		switch err {
+		case moduleErrors.ErrorServiceInvalidContext:
+			newErrorResponse(c, http.StatusUnauthorized, moduleErrors.ErrorHandlerForbidden.Error())
+			return
+		case moduleErrors.ErrorServiceBadPermissions:
+			newErrorResponse(c, http.StatusForbidden, moduleErrors.ErrorServiceBadPermissions.Error())
+			return
+		}
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -290,82 +211,30 @@ func (H *Handler) deleteCompany(c *gin.Context) {
 		"function": "deleteCompany",
 	}
 
-	userId, err := getUserId(c)
-	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"base":  logBase,
-			"error": err.Error(),
-		}).Error("error get user id")
-		newErrorResponse(c, http.StatusUnauthorized, err.Error())
-		return
-	}
-
-	ctx := context.TODO()
-
 	companyId, err := strconv.Atoi(c.Param("company_id"))
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":  logBase,
 			"error": err,
-		}).Error(moduleErrors.ErrorNoRequiredFieldsQuery.Error())
-		newErrorResponse(c, http.StatusBadRequest, moduleErrors.ErrorNoRequiredFieldsQuery.Error())
+		}).Error(moduleErrors.ErrorHandlerNoRequiredFieldsQuery.Error())
+		newErrorResponse(c, http.StatusBadRequest, moduleErrors.ErrorHandlerNoRequiredFieldsQuery.Error())
 	}
 
-	userData, err := H.userDB.GetUser(ctx, userId)
-	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"base":  logBase,
-			"error": err.Error(),
-		}).Error("error get user data")
-		newErrorResponse(c, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	// TODO: add check rights for service admin
-	if true {
-		if userData.CompanyId == nil || *userData.CompanyId != companyId {
-			if userData.CompanyId == nil {
-				logrus.WithFields(logrus.Fields{
-					"base": logBase,
-				}).Error("user has not companyId")
-			} else {
-				logrus.WithFields(logrus.Fields{
-					"base":            logBase,
-					"userCompany":     *userData.CompanyId,
-					"requiredCompany": companyId,
-				}).Error("user has invalid companyId")
-			}
-
-			newErrorResponse(c, http.StatusForbidden, moduleErrors.ErrorForbidden.Error())
-			return
-		}
-		// TODO: realise check permission
-		if userData.CompanyId == nil || *userData.CompanyId != companyId {
-			if userData.CompanyId == nil {
-				logrus.WithFields(logrus.Fields{
-					"base": logBase,
-				}).Error("user has not companyId")
-			} else {
-				logrus.WithFields(logrus.Fields{
-					"base":            logBase,
-					"userCompany":     *userData.CompanyId,
-					"requiredCompany": companyId,
-				}).Error("user has invalid companyId")
-			}
-
-			newErrorResponse(c, http.StatusForbidden, moduleErrors.ErrorForbidden.Error())
-			return
-		}
-	}
-
-	err = H.company.DeleteCompany(companyId)
-
+	err = H.company.DeleteCompany(c, companyId)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":      logBase,
 			"companyId": companyId,
 			"error":     err.Error(),
 		}).Error("delete company error")
+		switch err {
+		case moduleErrors.ErrorServiceInvalidContext:
+			newErrorResponse(c, http.StatusUnauthorized, moduleErrors.ErrorHandlerForbidden.Error())
+			return
+		case moduleErrors.ErrorServiceBadPermissions:
+			newErrorResponse(c, http.StatusForbidden, moduleErrors.ErrorServiceBadPermissions.Error())
+			return
+		}
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}

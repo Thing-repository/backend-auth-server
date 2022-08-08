@@ -2,15 +2,14 @@ package handler
 
 import (
 	"context"
-	"errors"
 	_ "github.com/Thing-repository/backend-server/docs"
 	"github.com/Thing-repository/backend-server/pkg/core"
 	"github.com/gin-gonic/gin"
+	"github.com/swaggo/files"
 	"github.com/swaggo/gin-swagger"
-	"github.com/swaggo/gin-swagger/swaggerFiles"
 )
 
-//go:generate mockgen -source=handler.go -destination=mocks/authMock.go
+//go:generate mockgen -source=handler.go -destinations=mocks/authMock.go
 type auth interface {
 	SignIn(authData *core.UserSignInData) (*core.SignInResponse, error)
 	SignUp(authData *core.UserSignUpData) (*core.SignInResponse, error)
@@ -18,15 +17,15 @@ type auth interface {
 
 //go:generate mockgen -source=handler.go -destination=mock/authMock.go
 type company interface {
-	AddCompany(companyAdd *core.CompanyBase, user *core.User) (*core.Company, error)
-	GetCompany(companyId int) (*core.Company, error)
-	UpdateCompany(companyBase core.CompanyBase, companyId int) (*core.Company, error)
-	DeleteCompany(companyId int) error
+	AddCompany(ctx context.Context, companyAdd *core.CompanyBase) (*core.Company, error)
+	GetCompany(ctx context.Context, companyId int) (*core.Company, error)
+	UpdateCompany(ctx context.Context, companyBase core.CompanyBase, companyId int) (*core.Company, error)
+	DeleteCompany(ctx context.Context, companyId int) error
 }
 
 //go:generate mockgen -source=handler.go -destination=mock/authMock.go
 type token interface {
-	ValidateToken(token string) (int, error)
+	ValidateToken(token string) (int, []core.Credentials, error)
 }
 
 //go:generate mockgen -source=auth.go -destination=mock/authMock.go
@@ -76,16 +75,4 @@ func (H *Handler) InitRoutes() *gin.Engine {
 		}
 	}
 	return router
-}
-
-func getUserId(c *gin.Context) (int, error) {
-	userId, ok := c.Get(userCtx)
-	if !ok {
-		return 0, errors.New("can't get user id")
-	}
-	id, ok := userId.(int)
-	if !ok {
-		return 0, errors.New("can't get user id")
-	}
-	return id, nil
 }

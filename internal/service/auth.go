@@ -9,7 +9,7 @@ import (
 
 //go:generate mockgen -source=auth.go -destination=mock/authMock.go
 type token interface {
-	GenerateToken(userId int) (string, error)
+	GenerateToken(userId int, credentials []core.Credentials) (string, error)
 }
 
 //go:generate mockgen -source=auth.go -destination=mock/authMock.go
@@ -25,17 +25,33 @@ type userDB interface {
 	AddUser(ctx context.Context, user *core.AddUserDB) (*core.UserDB, error)
 }
 
-type AuthService struct {
-	token token
-	db    userDB
-	hash  hash
+//go:generate mockgen -source=auth.go -destination=mock/authMock.go
+type credentialDBAuth interface {
+	GetUserCredential(ctx context.Context, userId int) ([]core.Credentials, error)
 }
 
-func NewAuth(token token, db userDB, hash hash) *AuthService {
+type transactionDBAuth interface {
+	InjectTx(ctx context.Context) (context.Context, error)
+	CommitTx(ctx context.Context) error
+	RollbackTx(ctx context.Context) error
+	RollbackTxDefer(ctx context.Context)
+}
+
+type AuthService struct {
+	token         token
+	db            userDB
+	hash          hash
+	credentialDB  credentialDBAuth
+	transactionDB transactionDBAuth
+}
+
+func NewAuth(token token, db userDB, hash hash, credentialDB credentialDBAuth, transactionDB transactionDBCompany) *AuthService {
 	return &AuthService{
-		token: token,
-		db:    db,
-		hash:  hash,
+		token:         token,
+		db:            db,
+		hash:          hash,
+		credentialDB:  credentialDB,
+		transactionDB: transactionDB,
 	}
 }
 
@@ -43,6 +59,7 @@ func (a *AuthService) SignIn(authData *core.UserSignInData) (*core.SignInRespons
 	logBase := logrus.Fields{
 		"module":   "service",
 		"function": "signIn",
+		"email":    authData.UserMail,
 	}
 
 	ctx := context.TODO()
@@ -52,7 +69,6 @@ func (a *AuthService) SignIn(authData *core.UserSignInData) (*core.SignInRespons
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":  logBase,
-			"email": authData.UserMail,
 			"error": err,
 		}).Error("error get user data")
 		switch err {
@@ -69,7 +85,7 @@ func (a *AuthService) SignIn(authData *core.UserSignInData) (*core.SignInRespons
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":  logBase,
-			"email": authData.UserMail,
+			"error": err,
 		}).Error("error validation password")
 		switch err {
 		case moduleErrors.ErrorHashValidationPassword:
@@ -80,17 +96,12 @@ func (a *AuthService) SignIn(authData *core.UserSignInData) (*core.SignInRespons
 	}
 
 	//generate token
-	token, err := a.token.GenerateToken(userData.Id)
+	token, err := a.generateTokenForUser(ctx, userData.Id)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
-			"base":   logBase,
-			"email":  authData.UserMail,
-			"userId": userData.Id,
+			"base":  logBase,
+			"error": err.Error(),
 		}).Error("error generate token")
-		switch err {
-		default:
-			return nil, err
-		}
 	}
 
 	return &core.SignInResponse{
@@ -126,6 +137,16 @@ func (a *AuthService) SignUp(authData *core.UserSignUpData) (*core.SignInRespons
 	userDb.PasswordHash = hash
 
 	ctx := context.TODO()
+	ctx, err = a.transactionDB.InjectTx(ctx)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"base":  logBase,
+			"error": err.Error(),
+		}).Error("error create transaction")
+		return nil, err
+	}
+
+	defer a.transactionDB.RollbackTxDefer(ctx)
 
 	// add user to database
 	userData, err := a.db.AddUser(ctx, &userDb)
@@ -142,23 +163,57 @@ func (a *AuthService) SignUp(authData *core.UserSignUpData) (*core.SignInRespons
 		}
 	}
 
-	token, err := a.token.GenerateToken(userData.Id)
+	token, err := a.generateTokenForUser(ctx, userData.Id)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
-			"base":   logBase,
-			"userId": userData.Id,
-			"error":  err,
+			"base":  logBase,
+			"error": err.Error(),
 		}).Error("error generate token")
-		switch err {
-		default:
-			return nil, err
-		}
 	}
 
-	responce := core.SignInResponse{
+	response := core.SignInResponse{
 		User:  userData.User,
 		Token: token,
 	}
 
-	return &responce, nil
+	if err = a.transactionDB.CommitTx(ctx); err != nil {
+		logrus.WithFields(logrus.Fields{
+			"base":  logBase,
+			"error": err.Error(),
+		}).Error("error commit transaction")
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+func (a *AuthService) generateTokenForUser(ctx context.Context, userId int) (string, error) {
+	logBase := logrus.Fields{
+		"module":   "service",
+		"function": "generateTokenForUser",
+		"userId":   userId,
+	}
+	credentials, err := a.credentialDB.GetUserCredential(ctx, userId)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"base":  logBase,
+			"error": err.Error(),
+		}).Error("error get credentials")
+		return "", err
+	}
+
+	//generate token
+	token, err := a.token.GenerateToken(userId, credentials)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"base":  logBase,
+			"error": err.Error(),
+		}).Error("error generate token")
+		switch err {
+		default:
+			return "", err
+		}
+	}
+
+	return token, nil
 }

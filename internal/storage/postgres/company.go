@@ -84,8 +84,10 @@ func (C *CompanyDB) AddCompany(ctx context.Context, companyBase *core.CompanyBas
 	}
 
 	return &core.Company{
-		CompanyBase: *companyBase,
-		Id:          companyId,
+		CompanyUpdate: core.CompanyUpdate{
+			CompanyBase: *companyBase,
+		},
+		Id: companyId,
 	}, nil
 }
 
@@ -146,7 +148,7 @@ func (C *CompanyDB) GetCompany(ctx context.Context, companyId int) (*core.Compan
 	return &companyData, nil
 }
 
-func (C *CompanyDB) UpdateCompany(ctx context.Context, company core.Company) error {
+func (C *CompanyDB) UpdateCompany(ctx context.Context, company core.CompanyUpdate, companyId int) error {
 	logBase := logrus.Fields{
 		"module":   "postgres",
 		"file":     "company.go",
@@ -169,7 +171,7 @@ func (C *CompanyDB) UpdateCompany(ctx context.Context, company core.Company) err
 		argId++
 	}
 	if company.Address != nil {
-		setValues = append(setValues, fmt.Sprintf("last_name = $%d", argId))
+		setValues = append(setValues, fmt.Sprintf("address = $%d", argId))
 		args = append(args, *company.Address)
 		argId++
 	}
@@ -187,7 +189,7 @@ func (C *CompanyDB) UpdateCompany(ctx context.Context, company core.Company) err
 					id = $%d
 `, setQuery, argId)
 
-	args = append(args, company.Id)
+	args = append(args, companyId)
 
 	cmdTag, err := db.Exec(ctx, query, args...)
 
