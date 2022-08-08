@@ -37,7 +37,7 @@ var tokenSecret string
 // hash data
 var salt string
 
-//db data
+// db data
 var postgresCfg postgres.Config
 var postgresPassword string
 
@@ -78,8 +78,9 @@ func main() {
 	// service modules
 	authService := service.NewAuth(tokenGenerator, userDb, hashGenerator, credentialsDB, transaction)
 	companyService := service.NewCompany(userDb, companyDb, departmentDB, credentialsDB, transaction)
+	userService := service.NewUser(userDb, transaction)
 
-	httpHandler := restHandler.NewHandler(authService, companyService, tokenGenerator, userDb)
+	httpHandler := restHandler.NewHandler(authService, companyService, tokenGenerator, userService, userDb)
 	httpServer := rest.NewHttpServer()
 
 	if err := httpServer.Run(httpPort, httpHandler.InitRoutes()); err != nil {
