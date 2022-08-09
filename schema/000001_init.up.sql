@@ -2,16 +2,17 @@ CREATE TABLE companies
 (
     id           serial primary key,
     company_name varchar(255) not null,
-    address      varchar(255) not null,
+    address      varchar(255) not null unique,
     image_url    varchar(255)
 );
 
 CREATE TABLE departments
 (
     id              serial primary key,
-    department_name varchar(255)                                    not null unique,
+    department_name varchar(255)                                    not null,
     company_id      int references companies (id) on delete cascade not null,
-    image_url       varchar(255)
+    image_url       varchar(255),
+    UNIQUE (company_id, department_name)
 );
 
 CREATE TABLE users
@@ -43,7 +44,8 @@ CREATE TABLE company_credentials
     id              serial primary key,
     credential_type credential_types                        not null,
     user_id         int references users (id) on delete cascade     not null,
-    object_id       int references companies (id) on delete cascade not null
+    object_id       int references companies (id) on delete cascade not null,
+    UNIQUE(credential_type, user_id, object_id)
 );
 
 CREATE TABLE department_credentials
@@ -51,7 +53,8 @@ CREATE TABLE department_credentials
     id              serial primary key,
     credential_type credential_types                          not null,
     user_id         int references users (id) on delete cascade       not null,
-    object_id       int references departments (id) on delete cascade not null
+    object_id       int references departments (id) on delete cascade not null,
+    UNIQUE(credential_type, user_id, object_id)
 );
 
 
