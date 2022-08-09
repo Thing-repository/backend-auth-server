@@ -145,6 +145,93 @@ func (U *UserDB) GetUser(ctx context.Context, userId int) (*core.UserDB, error) 
 	return &userData, nil
 }
 
+func (U *UserDB) GetUsersFilter(ctx context.Context, filter string, limit int, offset int) ([]core.User, error) {
+	logBase := logrus.Fields{
+		"module":   "postgres",
+		"file":     "user.go",
+		"function": "GetUsersFilter",
+		"filter":   filter,
+		"limit":    limit,
+		"offset":   offset,
+	}
+
+	db := U.dbDriver
+	tx, ok := U.transactionDB.ExtractTx(ctx)
+	if ok {
+		db = tx
+	}
+
+	filter += "%"
+
+	query := `
+		SELECT 
+    		id, 
+    		first_name, 
+    		last_name, 
+    		email, 
+    		image_url,
+    		company_id, 
+    		department_id 
+		FROM 
+    		users 
+		WHERE 
+    		(first_name || ' ' || last_name ILIKE $1 OR 
+    		last_name || ' ' || first_name ILIKE $1 OR
+			email ILIKE $1) AND 
+			company_id IS NULL
+		LIMIT $2 
+		OFFSET $3`
+
+	rows, err := db.Query(ctx, query, filter, limit, offset)
+	if err != nil {
+		if err != nil {
+			switch err.Error() {
+			default:
+				logrus.WithFields(logrus.Fields{
+					"base":  logBase,
+					"query": logQuery(query),
+					"error": err,
+				}).Error("error get filtered users")
+				return nil, err
+			}
+		}
+	}
+
+	var usersData []core.User
+
+	for rows.Next() {
+		var userData core.User
+		err = rows.Scan(&userData.Id, &userData.FirstName, &userData.LastName, &userData.Email,
+			&userData.ImageURL, &userData.CompanyId, &userData.DepartmentId)
+		if err != nil {
+			if pgErr, ok := err.(*pgconn.PgError); ok {
+				switch pgErr.Code {
+				default:
+					logrus.WithFields(logrus.Fields{
+						"base":    logBase,
+						"massage": pgErr.Message,
+						"where":   pgErr.Where,
+						"detail":  pgErr.Detail,
+						"code":    pgErr.Code,
+						"query":   logQuery(query),
+					}).Error("error scan rows")
+					return nil, err
+				}
+			} else {
+				logrus.WithFields(logrus.Fields{
+					"base":  logBase,
+					"query": logQuery(query),
+					"error": err,
+				}).Error("error scan rows")
+				return nil, err
+			}
+		}
+		usersData = append(usersData, userData)
+	}
+
+	return usersData, nil
+}
+
 func (U *UserDB) AddUser(ctx context.Context, user *core.AddUserDB) (*core.UserDB, error) {
 	logBase := logrus.Fields{
 		"module":   "postgres",
@@ -216,7 +303,7 @@ func (U *UserDB) AddUser(ctx context.Context, user *core.AddUserDB) (*core.UserD
 	return &ret, nil
 }
 
-func (U *UserDB) PathUser(ctx context.Context, user *core.UserDB) error {
+func (U *UserDB) PathUser(ctx context.Context, user *core.UserDB, userId int) error {
 	logBase := logrus.Fields{
 		"module":   "postgres",
 		"file":     "user.go",
@@ -293,7 +380,7 @@ func (U *UserDB) PathUser(ctx context.Context, user *core.UserDB) error {
 					id = $%d
 `, setQuery, argId)
 
-	args = append(args, user.User.Id)
+	args = append(args, userId)
 
 	cmdTag, err := db.Exec(ctx, query, args...)
 

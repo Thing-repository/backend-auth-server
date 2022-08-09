@@ -1,5 +1,6 @@
 package postgres
 
+import "C"
 import (
 	"context"
 	"github.com/Thing-repository/backend-server/pkg/core"
@@ -8,7 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type dbDriverDepartmentDB interface {
+type dbDepartmentDB interface {
 	QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
 	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
 }
@@ -18,12 +19,12 @@ type transactionDBDepartmentDB interface {
 }
 
 type DepartmentDB struct {
-	dbDriver      dbDriverDepartmentDB
+	db            dbDepartmentDB
 	transactionDB transactionDBDepartmentDB
 }
 
-func NewDepartmentDB(dbDriver dbDriverDepartmentDB, transactionDB transactionDBDepartmentDB) *DepartmentDB {
-	return &DepartmentDB{dbDriver: dbDriver, transactionDB: transactionDB}
+func NewDepartmentDB(dbDriver dbDepartmentDB, transactionDB transactionDBDepartmentDB) *DepartmentDB {
+	return &DepartmentDB{db: dbDriver, transactionDB: transactionDB}
 }
 
 func (D *DepartmentDB) AddDepartment(ctx context.Context, departmentBase *core.DepartmentBase) (*core.Department, error) {
@@ -32,7 +33,7 @@ func (D *DepartmentDB) AddDepartment(ctx context.Context, departmentBase *core.D
 		"function": "AddDepartment",
 	}
 
-	db := D.dbDriver
+	db := D.db
 	tx, ok := D.transactionDB.ExtractTx(ctx)
 	if ok {
 		db = tx
@@ -77,6 +78,63 @@ func (D *DepartmentDB) AddDepartment(ctx context.Context, departmentBase *core.D
 	}
 	return &core.Department{
 		DepartmentBase: *departmentBase,
-		Id:             departmentId,
+		Id:             &departmentId,
 	}, nil
+}
+
+func (D *DepartmentDB) GetDepartment(ctx context.Context, departmentId int) (*core.Department, error) {
+	logBase := logrus.Fields{
+		"module":   "postgres",
+		"file":     "department.go",
+		"function": "GetDepartment",
+	}
+
+	db := D.db
+	tx, ok := D.transactionDB.ExtractTx(ctx)
+	if ok {
+		db = tx
+	}
+
+	query := `
+				SELECT
+				    id,
+					department_name, 
+					company_id,
+					image_url
+				FROM
+				    departments
+				WHERE 
+					id = $1`
+
+	row := db.QueryRow(ctx, query, departmentId)
+
+	var departmentData core.Department
+
+	if err := row.Scan(&departmentData.Id, &departmentData.DepartmentName, &departmentData.CompanyId, &departmentData.ImageURL); err != nil {
+		if pgErr, ok := err.(*pgconn.PgError); ok {
+			switch pgErr.Code {
+			default:
+				logrus.WithFields(logrus.Fields{
+					"base":         logBase,
+					"departmentId": departmentId,
+					"massage":      pgErr.Message,
+					"where":        pgErr.Where,
+					"detail":       pgErr.Detail,
+					"code":         pgErr.Code,
+					"query":        query,
+				}).Error("error get department from postgres")
+				return nil, err
+			}
+		} else {
+			logrus.WithFields(logrus.Fields{
+				"base":         logBase,
+				"query":        query,
+				"departmentId": departmentId,
+				"error":        err,
+			}).Error("error get department from postgres")
+			return nil, err
+		}
+	}
+
+	return &departmentData, nil
 }

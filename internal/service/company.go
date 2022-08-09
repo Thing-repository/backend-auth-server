@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/Thing-repository/backend-server/pkg/core"
 	"github.com/Thing-repository/backend-server/pkg/core/moduleErrors"
+	"github.com/openlyinc/pointy"
 	"github.com/sirupsen/logrus"
 )
 
@@ -11,7 +12,7 @@ const departmentHeadName = "Head"
 
 //go:generate mockgen -source=auth.go -destination=mock/authMock.go
 type userDBCompany interface {
-	PathUser(ctx context.Context, user *core.UserDB) error
+	PathUser(ctx context.Context, user *core.UserDB, userId int) error
 	GetUser(ctx context.Context, userId int) (*core.UserDB, error)
 }
 
@@ -109,8 +110,8 @@ func (C *Company) AddCompany(ctx context.Context, companyAdd *core.CompanyBase) 
 	}
 
 	departmentAdd := &core.DepartmentBase{
-		DepartmentName: departmentHeadName,
-		CompanyId:      companyData.Id,
+		DepartmentName: pointy.String(departmentHeadName),
+		CompanyId:      &companyData.Id,
 	}
 
 	departmentData, err := C.departmentDB.AddDepartment(ctx, departmentAdd)
@@ -145,7 +146,7 @@ func (C *Company) AddCompany(ctx context.Context, companyAdd *core.CompanyBase) 
 		return nil, err
 	}
 
-	_, err = C.credentialsDB.CreateCredential(ctx, newCredential(departmentData.Id, userId, core.CredentialTypeDepartmentAdmin))
+	_, err = C.credentialsDB.CreateCredential(ctx, newCredential(*departmentData.Id, userId, core.CredentialTypeDepartmentAdmin))
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":      logBase,
@@ -156,7 +157,7 @@ func (C *Company) AddCompany(ctx context.Context, companyAdd *core.CompanyBase) 
 		return nil, err
 	}
 
-	_, err = C.credentialsDB.CreateCredential(ctx, newCredential(departmentData.Id, userId, core.CredentialTypeDepartmentUser))
+	_, err = C.credentialsDB.CreateCredential(ctx, newCredential(*departmentData.Id, userId, core.CredentialTypeDepartmentUser))
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":      logBase,
@@ -170,11 +171,11 @@ func (C *Company) AddCompany(ctx context.Context, companyAdd *core.CompanyBase) 
 	newUserDb := &core.UserDB{
 		User: core.User{
 			CompanyId:    &companyData.Id,
-			DepartmentId: &departmentData.Id,
+			DepartmentId: departmentData.Id,
 		},
 	}
 
-	err = C.userDB.PathUser(ctx, newUserDb)
+	err = C.userDB.PathUser(ctx, newUserDb, userId)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"base":      logBase,

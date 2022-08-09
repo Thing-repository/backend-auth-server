@@ -24,6 +24,12 @@ type company interface {
 }
 
 //go:generate mockgen -source=handler.go -destination=mock/authMock.go
+type user interface {
+	FindUsersForInvite(ctx context.Context, filter string, limit int, offset int) ([]core.User, error)
+	AddUserToCompany(ctx context.Context, userId int, departmentId int) error
+}
+
+//go:generate mockgen -source=handler.go -destination=mock/authMock.go
 type token interface {
 	ValidateToken(token string) (int, []core.Credentials, error)
 }
@@ -40,14 +46,16 @@ type Handler struct {
 	auth    auth
 	token   token
 	company company
+	user    user
 	userDB  userDB
 }
 
-func NewHandler(auth auth, company company, token token, userDB userDB) *Handler {
+func NewHandler(auth auth, company company, token token, user user, userDB userDB) *Handler {
 	return &Handler{
 		auth:    auth,
 		token:   token,
 		company: company,
+		user:    user,
 		userDB:  userDB,
 	}
 }
@@ -72,6 +80,11 @@ func (H *Handler) InitRoutes() *gin.Engine {
 			company.GET("/:company_id", H.getCompany)
 			company.PATCH("/:company_id", H.patchCompany)
 			company.DELETE("/:company_id", H.deleteCompany)
+		}
+		user := apiPrivate.Group("/users")
+		{
+			user.GET("/find", H.findUsersForInvite)
+			user.POST("/:user_id/add_to_company", H.addUserToCompany)
 		}
 	}
 	return router
