@@ -78,7 +78,7 @@ func main() {
 	// service modules
 	authService := service.NewAuth(tokenGenerator, userDb, hashGenerator, credentialsDB, transaction)
 	companyService := service.NewCompany(userDb, companyDb, departmentDB, credentialsDB, transaction)
-	userService := service.NewUser(userDb, transaction)
+	userService := service.NewUser(userDb, departmentDB, credentialsDB, transaction)
 
 	httpHandler := restHandler.NewHandler(authService, companyService, tokenGenerator, userService, userDb)
 	httpServer := rest.NewHttpServer()
