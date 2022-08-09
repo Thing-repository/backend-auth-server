@@ -37,12 +37,12 @@ func (H *Handler) getCurrentUser(c *gin.Context) {
 // @Failure 400,401,403 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Failure default {object} errorResponse
-// @Router /user/find [get]
+// @Router /user/{id} [get]
 func (H *Handler) getUser(c *gin.Context) {
 	newErrorResponse(c, http.StatusInternalServerError, "method not implemented")
 }
 
-// @Summary NOT IMPLEMENTED! FindUsersForInvite
+// @Summary FindUsersForInvite
 // @Security ApiKeyAuth
 // @Tags user
 // @Description This request for get user info
@@ -199,7 +199,7 @@ func (H *Handler) loadCurrentUserImage(c *gin.Context) {
 	newErrorResponse(c, http.StatusInternalServerError, "method not implemented")
 }
 
-// @Summary NOT IMPLEMENTED! AddUserToCompany
+// @Summary AddUserToCompany
 // @Security ApiKeyAuth
 // @Tags user
 // @Description This request for get user info
