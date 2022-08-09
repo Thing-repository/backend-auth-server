@@ -26,6 +26,7 @@ type company interface {
 //go:generate mockgen -source=handler.go -destination=mock/authMock.go
 type user interface {
 	FindUsersForInvite(ctx context.Context, filter string, limit int, offset int) ([]core.User, error)
+	AddUserToCompany(ctx context.Context, userId int, departmentId int) error
 }
 
 //go:generate mockgen -source=handler.go -destination=mock/authMock.go
@@ -83,6 +84,7 @@ func (H *Handler) InitRoutes() *gin.Engine {
 		user := apiPrivate.Group("/users")
 		{
 			user.GET("/find", H.findUsersForInvite)
+			user.POST("/:user_id/add_to_company", H.addUserToCompany)
 		}
 	}
 	return router
