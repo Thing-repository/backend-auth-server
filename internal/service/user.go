@@ -1,6 +1,5 @@
 package service
 
-import "C"
 import (
 	"context"
 	"github.com/Thing-repository/backend-server/pkg/core"
