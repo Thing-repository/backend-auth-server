@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.2
 
-FROM golang:1.18-alpine
+FROM golang:1.19-alpine
 
 RUN go version
 ENV GOPATH=/
